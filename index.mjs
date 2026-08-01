@@ -1,5 +1,7 @@
 import express from "express";
 import mysql from "mysql2/promise";
+import session from "express-session";
+import bcrypt from "bcryptjs";
 import "dotenv/config";
 
 const app = express();
@@ -13,6 +15,26 @@ app.use(express.static("public"));
 
 // Allows Express to read HTML form submissions
 app.use(express.urlencoded({ extended: true }));
+
+// Configures sessions so users can stay logged in between requests.
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: false,
+      maxAge: 1000 * 60 * 60 * 2,
+    },
+  })
+);
+
+// Makes the logged-in user available in every EJS page.
+app.use((req, res, next) => {
+  res.locals.currentUser = req.session.user || null;
+  next();
+});
 
 // Database connection pool
 const pool = mysql.createPool({
