@@ -47,6 +47,14 @@ const pool = mysql.createPool({
   waitForConnections: true,
 });
 
+// Displays the account signup form.
+app.get("/signup", (req, res) => {
+  res.render("signup", {
+    errorMessage: null,
+    formData: {},
+  });
+});
+
 // Home page
 app.get("/", (req, res) => {
   res.render("index");
