@@ -1,5 +1,7 @@
 import express from "express";
 import mysql from "mysql2/promise";
+import session from "express-session";
+import bcrypt from "bcryptjs";
 import "dotenv/config";
 
 const app = express();
@@ -14,6 +16,26 @@ app.use(express.static("public"));
 // Allows Express to read HTML form submissions
 app.use(express.urlencoded({ extended: true }));
 
+// Configures sessions so users can stay logged in between requests.
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: false,
+      maxAge: 1000 * 60 * 60 * 2,
+    },
+  })
+);
+
+// Makes the logged-in user available in every EJS page.
+app.use((req, res, next) => {
+  res.locals.currentUser = req.session.user || null;
+  next();
+});
+
 // Database connection pool
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
@@ -23,6 +45,89 @@ const pool = mysql.createPool({
   port: Number(process.env.DB_PORT || 3306),
   connectionLimit: 10,
   waitForConnections: true,
+});
+
+// Displays the account signup form.
+app.get("/signup", (req, res) => {
+  res.render("signup", {
+    errorMessage: null,
+    formData: {},
+  });
+});
+
+// Validates the signpu form, hashes the pssword, and creates a new user.
+app.post("/signup", async (req, res) => {
+  const displayName = req.body.displayName?.trim();
+  const email = req.body.email?.trim().toLowerCase();
+  const password = req.body.password;
+
+  // Sends the user back to the form if any field is empty.
+  if (!displayName || !email || !password) {
+    return res.status(400).render("signup", {
+      errorMessage: "All fields are required.",
+      formData: {
+        displayName,
+        email,
+      },
+    });
+  }
+
+  // Requires password to contian at least eight characters.
+  if (password.length < 8) {
+    return res.status(400).render("signup", {
+      errorMessage: "Password must be at least 8 characters.",
+      formData: {
+        displayName,
+        email,
+      },
+    });
+  }
+
+  try {
+    // Checks whether an account already uses this email address.
+    const [existingUsers] = await pool.execute(
+      "SELECT user_id FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (existingUsers.length > 0) {
+      return res.status(400).render("signup", {
+        errorMessage: "An account with this email already exists.",
+        formData: {
+          displayName,
+          email,
+        },
+      });
+    }
+
+    // Converts the password into a secure bcrypt hash.
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Inserts the new user into the users table.
+    await pool.execute(
+      `INSERT INTO users (display_name, email, password_hash)
+       VALUES (?, ?, ?)`,
+      [displayName, email, passwordHash]
+    );
+
+    // Sends the new user to the login page after signup succeeds.
+    res.redirect("/login");
+  } catch (error) {
+    console.error("Signup error:", error);
+
+    res.status(500).render("signup", {
+      errorMessage: "Unable to create your account. Please try again.",
+      formData: {
+        displayName,
+        email,
+      },
+    });
+  }
+});
+
+// Displays the login page.
+app.get("/login", (req, res) => {
+  res.render("login");
 });
 
 // Home page
