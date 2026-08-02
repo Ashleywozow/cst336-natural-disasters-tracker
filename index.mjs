@@ -55,6 +55,81 @@ app.get("/signup", (req, res) => {
   });
 });
 
+// Validates the signpu form, hashes the pssword, and creates a new user.
+app.post("/signup", async (req, res) => {
+  const displayName = req.body.displayName?.trim();
+  const email = req.body.email?.trim().toLowerCase();
+  const password = req.body.password;
+
+  // Sends the user back to the form if any field is empty.
+  if (!displayName || !email || !password) {
+    return res.status(400).render("signup", {
+      errorMessage: "All fields are required.",
+      formData: {
+        displayName,
+        email,
+      },
+    });
+  }
+
+  // Requires password to contian at least eight characters.
+  if (password.length < 8) {
+    return res.status(400).render("signup", {
+      errorMessage: "Password must be at least 8 characters.",
+      formData: {
+        displayName,
+        email,
+      },
+    });
+  }
+
+  try {
+    // Checks whether an account already uses this email address.
+    const [existingUsers] = await pool.execute(
+      "SELECT user_id FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (existingUsers.length > 0) {
+      return res.status(400).render("signup", {
+        errorMessage: "An account with this email already exists.",
+        formData: {
+          displayName,
+          email,
+        },
+      });
+    }
+
+    // Converts the password into a secure bcrypt hash.
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Inserts the new user into the users table.
+    await pool.execute(
+      `INSERT INTO users (display_name, email, password_hash)
+       VALUES (?, ?, ?)`,
+      [displayName, email, passwordHash]
+    );
+
+    // Sends the new user to the login page after signup succeeds.
+    res.redirect("/login");
+  } catch (error) {
+    console.error("Signup error:", error);
+
+    res.status(500).render("signup", {
+      errorMessage: "Unable to create your account. Please try again.",
+      formData: {
+        displayName,
+        email,
+      },
+    });
+  }
+});
+
+// Displays the login page.
+app.get("/login", (req, res) => {
+  res.render("login");
+});
+
 // Home page
 app.get("/", (req, res) => {
   res.render("index");
