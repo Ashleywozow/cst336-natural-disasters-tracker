@@ -1,0 +1,66 @@
+<%- include("partials/head", { title: "Community Reports" }) %>
+
+    <%- include("partials/nav") %>
+
+        <main>
+            <h1>Community Reports</h1>
+
+            <a href="/report/new">Add New Report</a>
+
+            <% if (reports.length===0) { %>
+
+                <p>No community reports have been submitted.</p>
+
+                <% } else { %>
+
+                    <% for (let report of reports) { %>
+
+                        <section class="report-card">
+
+                            <h2>
+                                <%= report.report_title %>
+                            </h2>
+
+                            <p>
+                                <strong>Reporter:</strong>
+                                <%= report.display_name %>
+                            </p>
+                             <p>
+                                <strong>Location:</strong>
+                                <%= report.location %>
+                            </p>
+                            <p>
+                                <strong>Disaster Type:</strong>
+                                <%= report.disaster_type %>
+                            </p>
+                           
+                            <p>
+                                <strong>Severity:</strong>
+                                <%= report.severity %>
+                            </p>
+                            <p>
+                                <strong>Status:</strong>
+                                <%= report.status %>
+                            </p>
+                            <p>
+                                <strong>Description:</strong>
+                                <%= report.description %>
+                            </p>
+                            <p>
+                                <strong>Event Date:</strong>
+                                <%= report.event_date %>
+                            </p>
+
+
+                            <a href="/report/edit?reportId=<%= report.report_id %>">
+                                Edit
+                            </a>
+                        </section>
+
+                        <% } %> 
+
+                            <% } %> 
+
+        </main>
+
+        <%- include("partials/footer") %>

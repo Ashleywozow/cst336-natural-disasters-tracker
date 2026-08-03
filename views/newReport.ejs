@@ -1,0 +1,77 @@
+<%- include("partials/head", { title: "Add Community Report" }) %>
+
+    <%- include("partials/nav") %>
+
+        <main>
+            <h1>Add Community Report</h1>
+
+            <p>
+                <strong>Reporter:</strong>
+                <%= displayName %>
+            </p>
+
+            <form method="POST" action="/report/new">
+
+                <label for="report_title">Report Title:</label>
+                <input type="text" id="report_title" name="report_title" required><br>
+
+                <label for="location">Location:</label>
+                <input type="text" id="location" name="location" required><br>
+
+                <label for="disaster_type">Disaster Type:</label>
+                <select id="disaster_type" name="disaster_type" required>
+                    <option value="">Select a disaster type</option>
+                    <option value="Earthquake">Earthquake</option>
+                    <option value="Flood">Flood</option>
+                    <option value="Fire">Fire</option>
+                    <option value="Storm">Storm</option>
+                    <option value="Other">Other</option>
+                </select><br>
+
+                <div id="other_disaster_container" hidden>
+                    <label for="other_disaster_type">
+                        Enter Disaster Type:
+                    </label>
+
+                    <input type="text" id="other_disaster_type" name="other_disaster_type">
+                </div><br>
+
+                <fieldset>
+                    <legend>Severity:</legend>
+
+                    <input type="radio" id="severity_minor" name="severity" value="Minor" required>
+                    <label for="severity_minor">Minor</label>
+
+                    <input type="radio" id="severity_moderate" name="severity" value="Moderate" required>
+                    <label for="severity_moderate">Moderate</label>
+                    
+                    <input type="radio" id="severity_extreme" name="severity" value="Extreme" required>
+                    <label for="severity_extreme">Extreme</label> <br>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Status:</legend>
+
+                    <input type="radio" id="status_active" name="status" value="Active" required>
+                    <label for="status_active">Active</label>
+
+                    <input type="radio" id="status_improving" name="status" value="Improving">
+                    <label for="status_improving">Improving</label>
+
+                    <input type="radio" id="status_resolved" name="status" value="Resolved">
+                    <label for="status_resolved">Resolved</label>
+                </fieldset><br>
+
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" required></textarea><br>
+
+                <label for="event_date">Event Date:</label>
+                <input type="date" id="event_date" name="event_date" required><br>
+
+                <button type="submit">Submit Report</button>
+                <a href="/reports">Cancel</a>
+
+            </form>
+        </main>
+
+        <%- include("partials/footer") %>
