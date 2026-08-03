@@ -6,3 +6,23 @@ CREATE TABLE users (
   password_hash VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Stores natural-disaster reports created by registered users.
+CREATE TABLE community_reports (
+  report_id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  report_title VARCHAR(100) NOT NULL,
+  disaster_type VARCHAR(50) NOT NULL,
+  location VARCHAR(100) NOT NULL,
+  severity VARCHAR(20) NOT NULL,
+  status VARCHAR(20) NOT NULL,
+  event_date DATE NOT NULL,
+  description TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (user_id)
+    REFERENCES users(user_id)
+    ON DELETE CASCADE
+);

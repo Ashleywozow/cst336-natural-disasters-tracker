@@ -135,6 +135,53 @@ app.get("/", (req, res) => {
   res.render("index");
 });
 
+// Displays all community reports.
+app.get("/reports", (req, res) => {
+  const sampleReports = [
+    {
+      report_id: 1,
+      display_name: "Sample User",
+      report_title: "Earthquake: Minor shaking reported",
+      disaster_type: "Earthquake",
+      location: "Monterey, California",
+      severity: "Minor",
+      status: "Resolved",
+      event_date: "2026-08-02",
+      description: "Brief shaking was reported with no visible damage.",
+    },
+  ];
+
+  res.render("reports", {
+    reports: sampleReports,
+  });
+});
+
+// Displays the form for adding a community report.
+app.get("/report/new", (req, res) => {
+  res.render("newReport", {
+    displayName:
+      req.session.user?.displayName || "Logged-in User",
+  });
+});
+
+// Displays a temporary pre-filled edit form.
+app.get("/report/edit", (req, res) => {
+  const sampleReport = {
+    report_id: 1,
+    report_title: "Earthquake: Minor shaking reported",
+    disaster_type: "Earthquake",
+    location: "Monterey, California",
+    severity: "Minor",
+    status: "Resolved",
+    event_date: "2026-08-02",
+    description: "Brief shaking was reported with no visible damage.",
+  };
+
+  res.render("editReport", {
+    report: sampleReport,
+  });
+});
+
 // Temporary database test
 app.get("/dbTest", async (req, res) => {
   try {
