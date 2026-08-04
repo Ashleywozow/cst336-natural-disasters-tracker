@@ -27,6 +27,9 @@ CREATE TABLE community_reports (
     ON DELETE CASCADE
 );
 
+-- Temp: Using my personal JawsDB for early testing.
+-- Swapping to the shared team DB once it available
+
 -- Stores earthquakes saved by users. Each record belongs to one user.
 CREATE TABLE saved_earthquakes (
   saved_id INT AUTO_INCREMENT PRIMARY KEY,
