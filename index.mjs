@@ -196,6 +196,32 @@ app.get("/dbTest", async (req, res) => {
   }
 });
 
+// Temp test route to confirms the USGS API is reachable
+// the raw shape of the data. Delete this once the real /earthquakes
+// route below is working and tested.
+// Using my personal db for now
+app.get("/earthquakeTest", async (req, res) => {
+  try {
+    const apiUrl =
+      "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=time&limit=5";
+
+    const apiResponse = await fetch(apiUrl);
+
+    if (!apiResponse.ok) {
+      throw new Error(`USGS API responded with status ${apiResponse.status}`);
+    }
+
+    const data = await apiResponse.json();
+
+    console.log(data.features[0]);
+
+    res.send(data.features);
+  } catch (error) {
+    console.error("USGS test route error:", error);
+    res.status(500).send("USGS API test failed - check the console.");
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
