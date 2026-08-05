@@ -221,7 +221,6 @@ app.get("/earthquakeTest", async (req, res) => {
 });
 
 // Displays recent earthquakes from the USGS Earthquake API.
-// Supports an optional minimum-magnitude filter via a query string.
 app.get("/earthquakes", async (req, res) => {
   const minMagnitude = req.query.minMagnitude || "";
 
@@ -268,6 +267,59 @@ app.get("/earthquakes", async (req, res) => {
       minMagnitude: minMagnitude,
       errorMessage:
         "Unable to load earthquake data right now. Please try again later.",
+    });
+  }
+});
+
+// Displays details for a single earthquake, looked up by its USGS event id.
+app.get("/earthquake/details", async (req, res) => {
+  const eventId = req.query.id;
+
+  try {
+    const apiUrl =
+      "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=" +
+      encodeURIComponent(eventId) +
+      "&format=geojson";
+
+    const apiResponse = await fetch(apiUrl);
+
+    if (!apiResponse.ok) {
+      throw new Error(`USGS API responded with status ${apiResponse.status}`);
+    }
+
+    const data = await apiResponse.json();
+
+    // A single-event query normally returns one Feature directly, but
+    // this also handles a FeatureCollection just in case.
+    const feature =
+      data.type === "FeatureCollection" ? data.features[0] : data;
+
+    if (!feature) {
+      throw new Error("Earthquake not found");
+    }
+
+    const earthquake = {
+      id: feature.id,
+      place: feature.properties.place,
+      magnitude: feature.properties.mag,
+      time: new Date(feature.properties.time).toLocaleString(),
+      isoTime: new Date(feature.properties.time).toISOString().slice(0, 10),
+      url: feature.properties.url,
+      longitude: feature.geometry.coordinates[0],
+      latitude: feature.geometry.coordinates[1],
+    };
+
+    res.render("earthquakeDetails", {
+      earthquake: earthquake,
+      errorMessage: null,
+    });
+  } catch (error) {
+    console.error("Earthquake details error:", error);
+
+    res.render("earthquakeDetails", {
+      earthquake: null,
+      errorMessage:
+        "Unable to load details for this earthquake. Please try again later.",
     });
   }
 });

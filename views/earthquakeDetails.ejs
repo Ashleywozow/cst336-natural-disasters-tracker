@@ -1,0 +1,26 @@
+<%- include("partials/head", { title: "Earthquake Details" }) %>
+
+<%- include("partials/nav") %>
+
+<main>
+    <h1>Earthquake Details</h1>
+
+    <% if (errorMessage) { %>
+
+        <p class="error-message"><%= errorMessage %></p>
+        <a href="/earthquakes">Back to Earthquakes</a>
+
+    <% } else { %>
+
+        <section class="earthquake-card">
+            <p><strong>Location:</strong> <%= earthquake.place %></p>
+            <p><strong>Magnitude:</strong> <%= earthquake.magnitude %></p>
+            <p><strong>Date:</strong> <%= earthquake.time %></p>
+            <p><strong>Coordinates:</strong> <%= earthquake.latitude %>, <%= earthquake.longitude %></p>
+            <p><a href="<%= earthquake.url %>" target="_blank">View Official USGS Source</a></p>
+        </section>
+
+    <% } %>
+</main>
+
+<%- include("partials/footer") %>
