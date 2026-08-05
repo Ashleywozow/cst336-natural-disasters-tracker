@@ -324,6 +324,52 @@ app.get("/earthquake/details", async (req, res) => {
   }
 });
 
+// Saves an earthquake to the logged-in user's account.
+// Login route sets it - update here if that changes.
+app.post("/earthquake/save", async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
+  const userId = req.session.user.user_id;
+  const apiEventId = req.body.apiEventId;
+  const title = req.body.title;
+  const location = req.body.location;
+  const magnitude = req.body.magnitude;
+  const eventDate = req.body.eventDate;
+  const sourceUrl = req.body.sourceUrl;
+  const personalNote = req.body.personalNote;
+
+  try {
+    await pool.execute(
+      `INSERT INTO saved_earthquakes
+        (user_id, api_event_id, title, location, magnitude, event_date, source_url, personal_note)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        userId,
+        apiEventId,
+        title,
+        location,
+        magnitude,
+        eventDate,
+        sourceUrl,
+        personalNote || null,
+      ]
+    );
+
+    res.redirect("/saved");
+  } catch (error) {
+    // A duplicate-key error just means this user already saved this
+    // earthquake - send them to their saved list instead of erroring.
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.redirect("/saved");
+    }
+
+    console.error("Save earthquake error:", error);
+    res.status(500).send("Unable to save this earthquake right now.");
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
