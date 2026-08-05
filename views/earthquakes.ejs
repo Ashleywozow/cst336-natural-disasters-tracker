@@ -1,0 +1,43 @@
+<%- include("partials/head", { title: "Recent Earthquakes" }) %>
+
+<%- include("partials/nav") %>
+
+<main>
+    <h1>Recent Earthquakes</h1>
+
+    <form action="/earthquakes" method="GET" id="magnitudeFilterForm">
+        <label for="minMagnitude">Minimum Magnitude:</label>
+        <select name="minMagnitude" id="minMagnitude">
+            <option value="" <% if (!minMagnitude) { %>selected<% } %>>All Magnitudes</option>
+            <option value="2.5" <% if (minMagnitude === "2.5") { %>selected<% } %>>2.5+</option>
+            <option value="4.5" <% if (minMagnitude === "4.5") { %>selected<% } %>>4.5+</option>
+            <option value="6.0" <% if (minMagnitude === "6.0") { %>selected<% } %>>6.0+</option>
+        </select>
+        <button type="submit">Apply Filter</button>
+    </form>
+
+    <% if (errorMessage) { %>
+
+        <p class="error-message"><%= errorMessage %></p>
+
+    <% } else if (earthquakes.length === 0) { %>
+
+        <p>No earthquakes found for this filter.</p>
+
+    <% } else { %>
+
+        <% for (let eq of earthquakes) { %>
+
+            <section class="earthquake-card">
+                <h2><%= eq.place %></h2>
+                <p><strong>Magnitude:</strong> <%= eq.magnitude %></p>
+                <p><strong>Date:</strong> <%= eq.time %></p>
+                <a href="/earthquake/details?id=<%= eq.id %>">View Details</a>
+            </section>
+
+        <% } %>
+
+    <% } %>
+</main>
+
+<%- include("partials/footer") %>

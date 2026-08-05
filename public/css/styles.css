@@ -12,3 +12,16 @@ footer {
 nav a {
   margin-right: 1rem;
 }
+
+/* Temp - Earthquake card styling  */
+/* Testing how it would look as card */
+.earthquake-card {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.error-message {
+  color: #b00020;
+}

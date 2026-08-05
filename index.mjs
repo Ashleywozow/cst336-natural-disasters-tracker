@@ -196,9 +196,7 @@ app.get("/dbTest", async (req, res) => {
   }
 });
 
-// Temp test route to confirms the USGS API is reachable
-// the raw shape of the data. Delete this once the real /earthquakes
-// route below is working and tested.
+// Temporary test route to confirms the USGS API is reachable
 // Using my personal db for now
 app.get("/earthquakeTest", async (req, res) => {
   try {
@@ -219,6 +217,58 @@ app.get("/earthquakeTest", async (req, res) => {
   } catch (error) {
     console.error("USGS test route error:", error);
     res.status(500).send("USGS API test failed - check the console.");
+  }
+});
+
+// Displays recent earthquakes from the USGS Earthquake API.
+// Supports an optional minimum-magnitude filter via a query string.
+app.get("/earthquakes", async (req, res) => {
+  const minMagnitude = req.query.minMagnitude || "";
+
+  try {
+    let apiUrl =
+      "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=time&limit=50";
+
+    if (minMagnitude) {
+      apiUrl += `&minmagnitude=${encodeURIComponent(minMagnitude)}`;
+    }
+
+    const apiResponse = await fetch(apiUrl);
+
+    if (!apiResponse.ok) {
+      throw new Error(`USGS API responded with status ${apiResponse.status}`);
+    }
+
+    const data = await apiResponse.json();
+
+    // Builds a plain array with just the fields the view needs.
+    const earthquakes = [];
+    for (let i = 0; i < data.features.length; i++) {
+      const feature = data.features[i];
+
+      earthquakes.push({
+        id: feature.id,
+        place: feature.properties.place,
+        magnitude: feature.properties.mag,
+        time: new Date(feature.properties.time).toLocaleString(),
+        url: feature.properties.url,
+      });
+    }
+
+    res.render("earthquakes", {
+      earthquakes: earthquakes,
+      minMagnitude: minMagnitude,
+      errorMessage: null,
+    });
+  } catch (error) {
+    console.error("Earthquake list error:", error);
+
+    res.render("earthquakes", {
+      earthquakes: [],
+      minMagnitude: minMagnitude,
+      errorMessage:
+        "Unable to load earthquake data right now. Please try again later.",
+    });
   }
 });
 
