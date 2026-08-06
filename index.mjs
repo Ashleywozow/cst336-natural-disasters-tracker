@@ -143,25 +143,35 @@ app.get("/", (req, res) => {
   res.render("index");
 });
 
-// Displays all community reports.
-app.get("/reports", (req, res) => {
-  const sampleReports = [
-    {
-      report_id: 1,
-      display_name: "Sample User",
-      report_title: "Earthquake: Minor shaking reported",
-      disaster_type: "Earthquake",
-      location: "Monterey, California",
-      severity: "Minor",
-      status: "Resolved",
-      event_date: "2026-08-02",
-      description: "Brief shaking was reported with no visible damage.",
-    },
-  ];
+// Retrieves and displays all community reports.
+app.get("/reports", async (req, res) => {
+  try {
+    const sql = `
+      SELECT
+        community_reports.*,
+        users.display_name,
+        DATE_FORMAT(
+          community_reports.event_date,
+          '%Y-%m-%d'
+        ) AS event_date
+      FROM community_reports
+      JOIN users
+        ON community_reports.user_id = users.user_id
+      ORDER BY community_reports.created_at DESC
+    `;
 
-  res.render("reports", {
-    reports: sampleReports,
-  });
+    const [rows] = await pool.query(sql);
+
+    res.render("reports", {
+      reports: rows,
+    });
+  } catch (error) {
+    console.error("Reports error:", error);
+
+    res.status(500).send(
+      "Unable to retrieve community reports."
+    );
+  }
 });
 
 // Displays the form for adding a community report.
