@@ -182,6 +182,104 @@ app.get("/report/new", (req, res) => {
   });
 });
 
+// Creates a community report for the logged-in user.
+app.post("/report/new", async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
+  let disasterType = req.body.disaster_type;
+
+  if (disasterType === "Other") {
+    disasterType = req.body.other_disaster_type?.trim();
+  }
+
+  const reportTitle = req.body.report_title?.trim();
+  const location = req.body.location?.trim();
+  const severity = req.body.severity;
+  const status = req.body.status;
+  const eventDate = req.body.event_date;
+  const description = req.body.description?.trim();
+
+  if (
+    !reportTitle ||
+    !location ||
+    !disasterType ||
+    !severity ||
+    !status ||
+    !eventDate ||
+    !description
+  ) {
+    return res.status(400).send("All report fields are required.");
+  }
+
+  try {
+    const sql = `
+      INSERT INTO community_reports
+        (
+          user_id,
+          report_title,
+          disaster_type,
+          location,
+          severity,
+          status,
+          event_date,
+          description
+        )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const params = [
+      req.session.user.userId,
+      reportTitle,
+      disasterType,
+      location,
+      severity,
+      status,
+      eventDate,
+      description,
+    ];
+
+    await pool.execute(sql, params);
+
+    res.redirect("/reports");
+  } catch (error) {
+    console.error("Create report error:", error);
+    res.status(500).send("Unable to create the report.");
+  }
+});
+
+//TEMPORARY ROUTES FOR TESTING
+//TODO: Remove after Morgans login and signup routes are working
+// TEMPORARY: Logs in the first database user for report testing.
+app.get("/dev-login", async (req, res) => {
+  try {
+    const [users] = await pool.execute(`
+      SELECT user_id, display_name, email
+      FROM users
+      ORDER BY user_id
+      LIMIT 1
+    `);
+
+    if (users.length === 0) {
+      return res.send("Create a user through /signup first.");
+    }
+
+    const user = users[0];
+
+    req.session.user = {
+      userId: user.user_id,
+      displayName: user.display_name,
+      email: user.email,
+    };
+
+    res.redirect("/report/new");
+  } catch (error) {
+    console.error("Temporary login error:", error);
+    res.status(500).send("Unable to create the test session.");
+  }
+});
+
 // Displays a temporary pre-filled edit form.
 app.get("/report/edit", (req, res) => {
   const sampleReport = {
