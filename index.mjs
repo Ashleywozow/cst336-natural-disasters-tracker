@@ -249,20 +249,29 @@ app.post("/report/new", async (req, res) => {
   }
 });
 
-//TEMPORARY ROUTES FOR TESTING
-//TODO: Remove after Morgans login and signup routes are working
-// TEMPORARY: Logs in the first database user for report testing.
+// TODO: REMOVE after Morgan completes the real login route.
+// TEMPORARY: Logs in a specific database user for testing.
 app.get("/dev-login", async (req, res) => {
+  const userId = req.query.userId;
+
+  if (!userId) {
+    return res.send(
+      "Enter a user ID in the URL. Example: /dev-login?userId=1"
+    );
+  }
+
   try {
-    const [users] = await pool.execute(`
-      SELECT user_id, display_name, email
-      FROM users
-      ORDER BY user_id
-      LIMIT 1
-    `);
+    const [users] = await pool.execute(
+      `
+        SELECT user_id, display_name, email
+        FROM users
+        WHERE user_id = ?
+      `,
+      [userId]
+    );
 
     if (users.length === 0) {
-      return res.send("Create a user through /signup first.");
+      return res.send("That user does not exist.");
     }
 
     const user = users[0];
@@ -273,7 +282,8 @@ app.get("/dev-login", async (req, res) => {
       email: user.email,
     };
 
-    res.redirect("/report/new");
+    res.redirect("/reports");
+
   } catch (error) {
     console.error("Temporary login error:", error);
     res.status(500).send("Unable to create the test session.");
@@ -330,6 +340,88 @@ app.get("/report/edit", async (req, res) => {
 
     res.status(500).send(
       "Unable to load the report."
+    );
+  }
+});
+
+// Updates a community report owned by the logged-in user.
+app.post("/report/edit", async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
+  const reportId = req.body.report_id;
+  const userId = req.session.user.userId;
+
+  let disasterType = req.body.disaster_type;
+
+  if (disasterType === "Other") {
+    disasterType = req.body.other_disaster_type?.trim();
+  }
+
+  const reportTitle = req.body.report_title?.trim();
+  const location = req.body.location?.trim();
+  const severity = req.body.severity;
+  const status = req.body.status;
+  const eventDate = req.body.event_date;
+  const description = req.body.description?.trim();
+
+  if (
+    !reportId ||
+    !reportTitle ||
+    !location ||
+    !disasterType ||
+    !severity ||
+    !status ||
+    !eventDate ||
+    !description
+  ) {
+    return res.status(400).send("All report fields are required.");
+  }
+
+  try {
+    const sql = `
+      UPDATE community_reports
+      SET
+        report_title = ?,
+        disaster_type = ?,
+        location = ?,
+        severity = ?,
+        status = ?,
+        event_date = ?,
+        description = ?,
+        updated_at = NOW()
+      WHERE report_id = ?
+        AND user_id = ?
+    `;
+
+    const params = [
+      reportTitle,
+      disasterType,
+      location,
+      severity,
+      status,
+      eventDate,
+      description,
+      reportId,
+      userId,
+    ];
+
+    const [result] = await pool.execute(sql, params);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).send(
+        "Report not found or you do not have permission to edit it."
+      );
+    }
+
+    res.redirect("/reports");
+
+  } catch (error) {
+    console.error("Update report error:", error);
+
+    res.status(500).send(
+      "Unable to update the report."
     );
   }
 });

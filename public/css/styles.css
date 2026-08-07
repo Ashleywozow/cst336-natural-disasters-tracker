@@ -107,3 +107,12 @@ nav a {
 .delete-report-option {
   margin-bottom: 10px;
 }
+
+/* Community Report Form Styling */
+.report-card {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 20px;
+  margin: 20px;
+  width: 50%;
+}

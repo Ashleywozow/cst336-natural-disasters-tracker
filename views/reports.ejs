@@ -2,92 +2,96 @@
 
     <%- include("partials/nav") %>
 
-        <main class="page-with-sidebar">
+        <% const ownedReports=reports.filter( report=>
+            currentUser &&
+            Number(report.user_id) === Number(currentUser.userId)
+            );
+            %>
 
-            <section class="page-content">
+            <main class="page-with-sidebar">
 
-                <h1>Community Reports</h1>
+                <section class="page-content">
 
-                <button onclick="window.location.href='/report/new'">Add New Report</button>
+                    <h1>Community Reports</h1>
 
-                <% if (currentUser) { %>
-                    <button type="button" id="openDeleteModal">
-                        Delete Report
-                    </button>
-                    <% } %>
-                        <% if (reports.length===0) { %>
+                    <button onclick="window.location.href='/report/new'">Add New Report</button>
 
-                            <p>No community reports have been submitted.</p>
+                    <% if (ownedReports.length> 0) { %>
+                        <button type="button" id="openDeleteModal">
+                            Delete Report
+                        </button>
+                        <% } %>
+                            <% if (reports.length===0) { %>
 
-                            <% } else { %>
+                                <p>No community reports have been submitted.</p>
 
-                                <% for (let report of reports) { %>
+                                <% } else { %>
 
-                                    <section class="report-card">
+                                    <% for (let report of reports) { %>
 
-                                        <h2>
-                                            <%= report.report_title %>
-                                        </h2>
+                                        <section class="report-card">
 
-                                        <p>
-                                            <strong>Reporter:</strong>
-                                            <%= report.display_name %>
-                                        </p>
-                                        <p>
-                                            <strong>Location:</strong>
-                                            <%= report.location %>
-                                        </p>
-                                        <p>
-                                            <strong>Disaster Type:</strong>
-                                            <%= report.disaster_type %>
-                                        </p>
+                                            <h2>
+                                                <%= report.report_title %>
+                                            </h2>
 
-                                        <p>
-                                            <strong>Severity:</strong>
-                                            <%= report.severity %>
-                                        </p>
-                                        <p>
-                                            <strong>Status:</strong>
-                                            <%= report.status %>
-                                        </p>
-                                        <p>
-                                            <strong>Description:</strong>
-                                            <%= report.description %>
-                                        </p>
-                                        <p>
-                                            <strong>Event Date:</strong>
-                                            <%= report.event_date %>
-                                        </p>
+                                            <p>
+                                                <strong>Reporter:</strong>
+                                                <%= report.display_name %>
+                                            </p>
+                                            <p>
+                                                <strong>Location:</strong>
+                                                <%= report.location %>
+                                            </p>
+                                            <p>
+                                                <strong>Disaster Type:</strong>
+                                                <%= report.disaster_type %>
+                                            </p>
 
-                                        <button onclick="window.location.href='/report/edit?reportId=<%= report.report_id %>'">
-                                            Edit
-                                        </button>
-                                    </section>
+                                            <p>
+                                                <strong>Severity:</strong>
+                                                <%= report.severity %>
+                                            </p>
+                                            <p>
+                                                <strong>Status:</strong>
+                                                <%= report.status %>
+                                            </p>
+                                            <p>
+                                                <strong>Description:</strong>
+                                                <%= report.description %>
+                                            </p>
+                                            <p>
+                                                <strong>Event Date:</strong>
+                                                <%= report.event_date %>
+                                            </p>
 
-                                    <% } %>
+                                            <% if (currentUser && Number(report.user_id)===Number(currentUser.userId)) {
+                                                %>
+                                                <button
+                                                    onclick="window.location.href='/report/edit?reportId=<%= report.report_id %>'">
+                                                    Edit
+                                                </button>
+                                                <% } %>
+                                        </section>
 
                                         <% } %>
 
-            </section>
+                                            <% } %>
 
-            <%- include("partials/shelterSidebar") %>
+                </section>
 
-                <!-- Delete Report Modal -->
-                <div id="deleteReportModal" class="delete-modal" hidden>
+                <%- include("partials/shelterSidebar") %>
 
-                    <div class="delete-modal-content">
+                    <!-- Delete Report Modal -->
+                    <div id="deleteReportModal" class="delete-modal" hidden>
 
-                        <h2>Delete Reports</h2>
+                        <div class="delete-modal-content">
 
-                        <p>Select the reports you would like to delete:</p>
+                            <h2>Delete Reports</h2>
 
-                        <form method="POST" action="/report/delete">
+                            <p>Select the reports you would like to delete:</p>
 
-                            <% const ownedReports=reports.filter( report=>
-                                currentUser &&
-                                report.user_id === currentUser.userId
-                                );
-                                %>
+                            <form method="POST" action="/report/delete">
 
                                 <% if (ownedReports.length===0) { %>
 
@@ -122,12 +126,12 @@
                                                         Cancel
                                                     </button>
 
-                        </form>
+                            </form>
+
+                        </div>
 
                     </div>
 
-                </div>
+            </main>
 
-        </main>
-
-        <%- include("partials/footer") %>
+            <%- include("partials/footer") %>
