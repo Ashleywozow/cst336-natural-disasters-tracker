@@ -8,65 +8,125 @@
 
                 <h1>Community Reports</h1>
 
-                <a href="/report/new">Add New Report</a>
+                <button onclick="window.location.href='/report/new'">Add New Report</button>
 
-                <% if (reports.length===0) { %>
+                <% if (currentUser) { %>
+                    <button type="button" id="openDeleteModal">
+                        Delete Report
+                    </button>
+                    <% } %>
+                        <% if (reports.length===0) { %>
 
-                    <p>No community reports have been submitted.</p>
+                            <p>No community reports have been submitted.</p>
 
-                    <% } else { %>
+                            <% } else { %>
 
-                        <% for (let report of reports) { %>
+                                <% for (let report of reports) { %>
 
-                            <section class="report-card">
+                                    <section class="report-card">
 
-                                <h2>
-                                    <%= report.report_title %>
-                                </h2>
+                                        <h2>
+                                            <%= report.report_title %>
+                                        </h2>
 
-                                <p>
-                                    <strong>Reporter:</strong>
-                                    <%= report.display_name %>
-                                </p>
-                                <p>
-                                    <strong>Location:</strong>
-                                    <%= report.location %>
-                                </p>
-                                <p>
-                                    <strong>Disaster Type:</strong>
-                                    <%= report.disaster_type %>
-                                </p>
+                                        <p>
+                                            <strong>Reporter:</strong>
+                                            <%= report.display_name %>
+                                        </p>
+                                        <p>
+                                            <strong>Location:</strong>
+                                            <%= report.location %>
+                                        </p>
+                                        <p>
+                                            <strong>Disaster Type:</strong>
+                                            <%= report.disaster_type %>
+                                        </p>
 
-                                <p>
-                                    <strong>Severity:</strong>
-                                    <%= report.severity %>
-                                </p>
-                                <p>
-                                    <strong>Status:</strong>
-                                    <%= report.status %>
-                                </p>
-                                <p>
-                                    <strong>Description:</strong>
-                                    <%= report.description %>
-                                </p>
-                                <p>
-                                    <strong>Event Date:</strong>
-                                    <%= report.event_date %>
-                                </p>
+                                        <p>
+                                            <strong>Severity:</strong>
+                                            <%= report.severity %>
+                                        </p>
+                                        <p>
+                                            <strong>Status:</strong>
+                                            <%= report.status %>
+                                        </p>
+                                        <p>
+                                            <strong>Description:</strong>
+                                            <%= report.description %>
+                                        </p>
+                                        <p>
+                                            <strong>Event Date:</strong>
+                                            <%= report.event_date %>
+                                        </p>
 
+                                        <button onclick="window.location.href='/report/edit?reportId=<%= report.report_id %>'">
+                                            Edit
+                                        </button>
+                                    </section>
 
-                                <a href="/report/edit?reportId=<%= report.report_id %>">
-                                    Edit
-                                </a>
-                            </section>
+                                    <% } %>
 
-                            <% } %>
-
-                                <% } %>
+                                        <% } %>
 
             </section>
 
             <%- include("partials/shelterSidebar") %>
+
+                <!-- Delete Report Modal -->
+                <div id="deleteReportModal" class="delete-modal" hidden>
+
+                    <div class="delete-modal-content">
+
+                        <h2>Delete Reports</h2>
+
+                        <p>Select the reports you would like to delete:</p>
+
+                        <form method="POST" action="/report/delete">
+
+                            <% const ownedReports=reports.filter( report=>
+                                currentUser &&
+                                report.user_id === currentUser.userId
+                                );
+                                %>
+
+                                <% if (ownedReports.length===0) { %>
+
+                                    <p>You do not have any reports to delete.</p>
+
+                                    <% } else { %>
+
+                                        <% for (let report of ownedReports) { %>
+
+                                            <div class="delete-report-option">
+
+                                                <input type="checkbox" id="delete_<%= report.report_id %>"
+                                                    name="report_ids" value="<%= report.report_id %>">
+
+                                                <label for="delete_<%= report.report_id %>">
+                                                    <%= report.report_title %>
+                                                </label>
+
+                                            </div>
+
+                                            <% } %>
+
+                                                <br>
+
+                                                <button type="submit">
+                                                    Delete Selected
+                                                </button>
+
+                                                <% } %>
+
+                                                    <button type="button" id="closeDeleteModal">
+                                                        Cancel
+                                                    </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
 
         </main>
 

@@ -280,22 +280,108 @@ app.get("/dev-login", async (req, res) => {
   }
 });
 
-// Displays a temporary pre-filled edit form.
-app.get("/report/edit", (req, res) => {
-  const sampleReport = {
-    report_id: 1,
-    report_title: "Earthquake: Minor shaking reported",
-    disaster_type: "Earthquake",
-    location: "Monterey, California",
-    severity: "Minor",
-    status: "Resolved",
-    event_date: "2026-08-02",
-    description: "Brief shaking was reported with no visible damage.",
-  };
+// Displays the edit form with the selected report's current data.
+app.get("/report/edit", async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
 
-  res.render("editReport", {
-    report: sampleReport,
-  });
+  const reportId = req.query.reportId;
+  const userId = req.session.user.userId;
+
+  if (!reportId) {
+    return res.redirect("/reports");
+  }
+
+  try {
+    const sql = `
+      SELECT
+        report_id,
+        user_id,
+        report_title,
+        disaster_type,
+        location,
+        severity,
+        status,
+        DATE_FORMAT(event_date, '%Y-%m-%d') AS event_date,
+        description
+      FROM community_reports
+      WHERE report_id = ?
+        AND user_id = ?
+    `;
+
+    const [rows] = await pool.execute(sql, [
+      reportId,
+      userId,
+    ]);
+
+    if (rows.length === 0) {
+      return res.status(404).send(
+        "Report not found or you do not have permission to edit it."
+      );
+    }
+
+    res.render("editReport", {
+      report: rows[0],
+    });
+
+  } catch (error) {
+    console.error("Edit report error:", error);
+
+    res.status(500).send(
+      "Unable to load the report."
+    );
+  }
+});
+
+// Deletes selected reports owned by the logged-in user.
+app.post("/report/delete", async (req, res) => {
+
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
+  let reportIds = req.body.report_ids;
+
+  if (!reportIds) {
+    return res.redirect("/reports");
+  }
+
+  // If only one checkbox was selected,
+  // Express gives us a string instead of an array.
+  if (!Array.isArray(reportIds)) {
+    reportIds = [reportIds];
+  }
+
+  try {
+
+    const placeholders = reportIds
+      .map(() => "?")
+      .join(", ");
+
+    const sql = `
+      DELETE FROM community_reports
+      WHERE report_id IN (${placeholders})
+        AND user_id = ?
+    `;
+
+    const params = [
+      ...reportIds,
+      req.session.user.userId,
+    ];
+
+    await pool.execute(sql, params);
+
+    res.redirect("/reports");
+
+  } catch (error) {
+
+    console.error("Delete report error:", error);
+
+    res.status(500).send(
+      "Unable to delete the selected reports."
+    );
+  }
 });
 
 // Temporary database test
