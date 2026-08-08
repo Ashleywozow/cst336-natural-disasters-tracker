@@ -143,6 +143,53 @@ app.get("/", (req, res) => {
   res.render("index");
 });
 
+// Displays current natural events from NASA EONET.
+app.get("/events", async (req, res) => {
+  try {
+    const apiUrl =
+      "https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=10";
+
+    const apiResponse = await fetch(apiUrl);
+
+    if (!apiResponse.ok) {
+      throw new Error(
+        `NASA EONET API responded with status ${apiResponse.status}`
+      );
+    }
+
+    const data = await apiResponse.json();
+
+    const events = [];
+
+    for (let event of data.events) {
+      events.push({
+        title: event.title,
+        category: event.categories?.[0]?.title || "Unknown",
+        date:
+          event.geometry?.length > 0
+            ? new Date(
+                event.geometry[event.geometry.length - 1].date
+              ).toLocaleString()
+            : "Unknown",
+        sourceUrl: event.sources?.[0]?.url || null,
+      });
+    }
+
+    res.render("events", {
+      events: events,
+      errorMessage: null,
+    });
+  } catch (error) {
+    console.error("NASA EONET error:", error);
+
+    res.render("events", {
+      events: [],
+      errorMessage:
+        "Unable to load natural events right now. Please try again later.",
+    });
+  }
+});
+
 // Displays all community reports.
 app.get("/reports", (req, res) => {
   const sampleReports = [
