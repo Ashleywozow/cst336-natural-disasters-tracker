@@ -190,6 +190,30 @@ app.get("/events", async (req, res) => {
   }
 });
 
+// Displays preparedness tips from MySQL.
+app.get("/preparedness", async (req, res) => {
+  try {
+    const [tips] = await pool.execute(
+      `SELECT tip_id, disaster_type, title, tip_text
+       FROM preparedness_tips
+       ORDER BY disaster_type, tip_id`
+    );
+
+    res.render("preparedness", {
+      tips: tips,
+      errorMessage: null,
+    });
+  } catch (error) {
+    console.error("Preparedness error:", error);
+
+    res.render("preparedness", {
+      tips: [],
+      errorMessage:
+        "Unable to load preparedness tips right now. Please try again later.",
+    });
+  }
+});
+
 // Displays all community reports.
 app.get("/reports", (req, res) => {
   const sampleReports = [

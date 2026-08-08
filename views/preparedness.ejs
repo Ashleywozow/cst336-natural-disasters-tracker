@@ -1,0 +1,39 @@
+<%- include("partials/head", { title: "Preparedness Tips" }) %>
+
+<%- include("partials/nav") %>
+
+<main>
+  <h1>Preparedness Tips</h1>
+
+  <p>
+    Review basic safety information for different types of natural disasters.
+  </p>
+
+  <% if (errorMessage) { %>
+    <p class="error-message"><%= errorMessage %></p>
+  <% } %>
+
+  <% if (!errorMessage && tips.length === 0) { %>
+    <p>No preparedness tips are available right now.</p>
+  <% } %>
+
+  <section class="preparedness-container">
+
+    <% for (let tip of tips) { %>
+
+      <article class="preparedness-card">
+
+        <h2><%= tip.disaster_type %></h2>
+
+        <h3><%= tip.title %></h3>
+
+        <p><%= tip.tip_text %></p>
+
+      </article>
+
+    <% } %>
+
+  </section>
+</main>
+
+<%- include("partials/footer") %>
