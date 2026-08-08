@@ -140,7 +140,9 @@ app.get("/login", (req, res) => {
 
 // Home page
 app.get("/", (req, res) => {
-  res.render("index");
+  res.render("index", {
+    pageTitle: "Natural Disasters Tracker"
+  });
 });
 
 // Displays current natural events from NASA EONET.
