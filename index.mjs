@@ -31,11 +31,8 @@ app.use(
 );
 
 // Makes the logged-in user available in every EJS page.
-// TEMPORARY - fakes a logged-in session until login function is merged.
 app.use((req, res, next) => {
-  if (!req.session.user) {
-    req.session.user = { user_id: 1, displayName: "Lee" };
-  }
+  res.locals.currentUser = req.session.user || null;
   next();
 });
 
