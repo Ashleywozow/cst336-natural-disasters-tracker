@@ -47,6 +47,12 @@ const pool = mysql.createPool({
   waitForConnections: true,
 });
 
+function requireLogin(req, res, next) { 
+  if (!req.session.user) { 
+    return res.redirect("/login"); 
+  } next(); 
+}
+
 // Displays the account signup form.
 app.get("/signup", (req, res) => {
   res.render("signup", {
@@ -292,7 +298,7 @@ app.get("/preparedness", async (req, res) => {
 });
 
 // Retrieves and displays all community reports.
-app.get("/reports", requireLogin, async (req, res) => {
+app.get("/reports", async (req, res) => {
   try {
     const sql = `
       SELECT
@@ -393,47 +399,6 @@ app.post("/report/new", async (req, res) => {
   } catch (error) {
     console.error("Create report error:", error);
     res.status(500).send("Unable to create the report.");
-  }
-});
-
-// TODO: REMOVE after Morgan completes the real login route.
-// TEMPORARY: Logs in a specific database user for testing.
-app.get("/dev-login", async (req, res) => {
-  const userId = req.query.userId;
-
-  if (!userId) {
-    return res.send(
-      "Enter a user ID in the URL. Example: /dev-login?userId=1"
-    );
-  }
-
-  try {
-    const [users] = await pool.execute(
-      `
-        SELECT user_id, display_name, email
-        FROM users
-        WHERE user_id = ?
-      `,
-      [userId]
-    );
-
-    if (users.length === 0) {
-      return res.send("That user does not exist.");
-    }
-
-    const user = users[0];
-
-    req.session.user = {
-      userId: user.user_id,
-      displayName: user.display_name,
-      email: user.email,
-    };
-
-    res.redirect("/reports");
-
-  } catch (error) {
-    console.error("Temporary login error:", error);
-    res.status(500).send("Unable to create the test session.");
   }
 });
 
@@ -620,20 +585,6 @@ app.post("/report/delete", async (req, res) => {
     res.status(500).send(
       "Unable to delete the selected reports."
     );
-  }
-});
-
-// Temporary database test
-app.get("/dbTest", async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      "SELECT CURDATE() AS currentDate"
-    );
-
-    res.send(rows);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Database connection failed");
   }
 });
 
