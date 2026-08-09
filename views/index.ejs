@@ -1,5 +1,5 @@
 <%- include("partials/head", {
-  title: "Natural Disasters Tracker"
+  title: pageTitle
 }) %>
 
 <%- include("partials/nav") %>
@@ -8,9 +8,29 @@
   <h1>Natural Disasters Tracker</h1>
 
   <p>
-    View recent earthquakes, natural events, community
-    reports, and preparedness information.
+    View recent earthquakes, natural events, community reports,
+    and preparedness information.
   </p>
+
+  <section>
+    <h2>Explore the Tracker</h2>
+
+    <p>
+      <a href="/earthquakes">View Recent Earthquakes</a>
+    </p>
+
+    <p>
+      <a href="/events">View Natural Events</a>
+    </p>
+
+    <p>
+      <a href="/reports">View Community Reports</a>
+    </p>
+
+    <p>
+      <a href="/preparedness">View Preparedness Tips</a>
+    </p>
+  </section>
 </main>
 
 <%- include("partials/footer") %>

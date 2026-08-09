@@ -1,0 +1,57 @@
+<%- include("partials/head", { title: "Natural Events" }) %>
+
+<%- include("partials/nav") %>
+
+<main>
+  <h1>Current Natural Events</h1>
+
+  <p>
+    Current natural events provided by NASA's EONET API.
+  </p>
+
+  <% if (errorMessage) { %>
+    <p><%= errorMessage %></p>
+  <% } %>
+
+  <% if (!errorMessage && events.length === 0) { %>
+    <p>No current natural events were found.</p>
+  <% } %>
+
+  <section class="events-container">
+
+    <% for (let event of events) { %>
+
+      <article class="event-card">
+
+        <h2><%= event.title %></h2>
+
+        <p>
+          <strong>Category:</strong>
+          <%= event.category %>
+        </p>
+
+        <p>
+          <strong>Last Updated:</strong>
+          <%= event.date %>
+        </p>
+
+        <% if (event.sourceUrl) { %>
+          <p>
+            <a
+              href="<%= event.sourceUrl %>"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View Official Source
+            </a>
+          </p>
+        <% } %>
+
+      </article>
+
+    <% } %>
+
+  </section>
+</main>
+
+<%- include("partials/footer") %>

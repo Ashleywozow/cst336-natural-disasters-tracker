@@ -26,6 +26,54 @@ nav a {
   color: #b00020;
 }
 
+/* Shared responsive layout */
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.events-container,
+.preparedness-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.event-card,
+.preparedness-card {
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Tablet and mobile screens */
+@media (max-width: 768px) {
+  main {
+    padding: 1rem;
+  }
+
+  .events-container,
+  .preparedness-container {
+    grid-template-columns: 1fr;
+  }
+
+  nav {
+    flex-direction: column;
+  }
 
 /* Shelter Sidebar Styling */
 .shelter-sidebar {
