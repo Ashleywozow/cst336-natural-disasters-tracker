@@ -47,6 +47,15 @@ const pool = mysql.createPool({
   waitForConnections: true,
 });
 
+// Blocks protected routes until the user is logged in.
+function requireLogin(req, res, next) {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
+  next();
+}
+
 // Displays the account signup form.
 app.get("/signup", (req, res) => {
   res.render("signup", {
