@@ -15,14 +15,3 @@
 
 <%- include("partials/footer") %>
 
-<% if (currentUser) { %>
-  <p>Welcome, <%= currentUser.displayName %></p>
-
-  <form action="/logout" method="POST">
-    <button type="submit">Log Out</button>
-  </form>
-<% } else { %>
-  <p>You are not logged in.</p>
-  <a href="/login">Log In</a>
-  <a href="/signup">Sign Up</a>
-<% } %>
