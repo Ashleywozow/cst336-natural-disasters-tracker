@@ -55,6 +55,8 @@ app.get("/signup", (req, res) => {
   });
 });
 
+function requireLogin(req, res, next) { if (!req.session.user) { return res.redirect("/login"); } next(); }
+
 // Validates the signpu form, hashes the pssword, and creates a new user.
 app.post("/signup", async (req, res) => {
   const displayName = req.body.displayName?.trim();
@@ -786,11 +788,11 @@ app.post("/earthquake/save", requireLogin, async (req, res) => {
 });
 
 // Displays the logged-in user's saved earthquakes.
-app.get("/saved", async (req, res) => {
+app.get("/saved", requireLogin, async (req, res) => {
   try {
     const [rows] = await pool.execute(
       `SELECT * FROM saved_earthquakes WHERE user_id = ? ORDER BY saved_at DESC`,
-      [req.session.user.user_id]
+      [req.session.user.userId]
     );
 
     res.render("savedEarthquakes", { savedEarthquakes: rows });
@@ -801,13 +803,13 @@ app.get("/saved", async (req, res) => {
 });
 
 // Removes one saved earthquake 
-app.post("/saved/delete", async (req, res) => {
+app.post("/saved/delete", requireLogin, async (req, res) => {
   const savedId = req.body.savedId;
 
   try {
     await pool.execute(
       `DELETE FROM saved_earthquakes WHERE saved_id = ? AND user_id = ?`,
-      [savedId, req.session.user.user_id]
+      [savedId, req.session.user.userId]
     );
 
     res.redirect("/saved");
