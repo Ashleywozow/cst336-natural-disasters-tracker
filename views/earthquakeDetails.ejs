@@ -17,31 +17,22 @@
             <p><strong>Magnitude:</strong> <%= earthquake.magnitude %></p>
             <p><strong>Date:</strong> <%= earthquake.time %></p>
             <p><strong>Coordinates:</strong> <%= earthquake.latitude %>, <%= earthquake.longitude %></p>
-            <p><a href="<%= earthquake.url %>" target="_blank">View Official USGS Source</a></p>
+            <p><a href="<%= earthquake.url %>" target="_blank">View Ofsficial USGS Source</a></p>
 
-<% if (currentUser) { %>
+            <form action="/earthquake/save" method="POST">
+                <input type="hidden" name="apiEventId" value="<%= earthquake.id %>">
+                <input type="hidden" name="title" value="M <%= earthquake.magnitude %> - <%= earthquake.place %>">
+                <input type="hidden" name="location" value="<%= earthquake.place %>">
+                <input type="hidden" name="magnitude" value="<%= earthquake.magnitude %>">
+                <input type="hidden" name="eventDate" value="<%= earthquake.isoTime %>">
+                <input type="hidden" name="sourceUrl" value="<%= earthquake.url %>">
 
-    <form action="/earthquake/save" method="POST">
-        <input type="hidden" name="apiEventId" value="<%= earthquake.id %>">
-        <input type="hidden" name="title" value="M <%= earthquake.magnitude %> - <%= earthquake.place %>">
-        <input type="hidden" name="location" value="<%= earthquake.place %>">
-        <input type="hidden" name="magnitude" value="<%= earthquake.magnitude %>">
-        <input type="hidden" name="eventDate" value="<%= earthquake.isoTime %>">
-        <input type="hidden" name="sourceUrl" value="<%= earthquake.url %>">
+                <label for="personalNote">Personal Note (optional):</label>
+                <textarea name="personalNote" id="personalNote"></textarea>
 
-        <label for="personalNote">Personal Note (optional):</label>
-        <textarea name="personalNote" id="personalNote"></textarea>
-
-        <button type="submit">Save Earthquake</button>
-    </form>
-
-<%# Retest this later once login is completed%>
-<% } else { %>
-
-    <p><a href="/login">Log in</a> to save this earthquake.</p>
-
-<% } %>
-        </section>
+                <button type="submit">Save Earthquake</button>
+        </form>
+    </section>
 
     <% } %>
 </main>
