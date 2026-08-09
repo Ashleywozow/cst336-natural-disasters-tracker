@@ -392,7 +392,7 @@ app.get("/earthquake/details", async (req, res) => {
   }
 });
 
-// Saves an earthquake to the logged-in user's account.
+// Saves an earthquake to the login user's account.
 app.post("/earthquake/save", requireLogin, async (req, res) => {
   const userId = req.session.user.userId;
 
