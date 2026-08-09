@@ -24,6 +24,11 @@
                 <% } %>
 
                 <p><a href="<%= saved.source_url %>" target="_blank">View Official Source</a></p>
+                
+                <form action="/saved/delete" method="POST">
+                    <input type="hidden" name="savedId" value="<%= saved.saved_id %>">
+                    <button type="submit" class="removeSavedBtn">Remove</button>
+                </form>
             </section>
 
         <% } %>

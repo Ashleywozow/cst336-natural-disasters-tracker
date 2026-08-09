@@ -388,6 +388,23 @@ app.get("/saved", async (req, res) => {
   }
 });
 
+// Removes one saved earthquake 
+app.post("/saved/delete", async (req, res) => {
+  const savedId = req.body.savedId;
+
+  try {
+    await pool.execute(
+      `DELETE FROM saved_earthquakes WHERE saved_id = ? AND user_id = ?`,
+      [savedId, req.session.user.user_id]
+    );
+
+    res.redirect("/saved");
+  } catch (error) {
+    console.error("Remove saved earthquake error:", error);
+    res.redirect("/saved");
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
