@@ -135,15 +135,6 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-// Redirects visitors to login when they request a protected route.
-function requireLogin(req, res, next) {
-  if (!req.session.user) {
-    return res.redirect("/login");
-  }
-
-  next();
-}
-
 // Displays the login form.
 app.get("/login", (req, res) => {
   res.render("login", {
