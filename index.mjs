@@ -47,14 +47,6 @@ const pool = mysql.createPool({
   waitForConnections: true,
 });
 
-// Blocks a route until the user is logged in
-function requireLogin(req, res, next) {
-  if (!req.session.user) {
-    return res.redirect("/login");
-  }
-  next();
-}
-
 // Displays the account signup form.
 app.get("/signup", (req, res) => {
   res.render("signup", {
@@ -118,6 +110,8 @@ app.post("/signup", async (req, res) => {
       [displayName, email, passwordHash]
     );
 
+    
+
     // Sends the new user to the login page after signup succeeds.
     res.redirect("/login");
   } catch (error) {
@@ -133,9 +127,90 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-// Displays the login page.
+// Displays the login form.
 app.get("/login", (req, res) => {
-  res.render("login");
+  res.render("login", {
+    errorMessage: null,
+    formData: {},
+  });
+});
+
+// Validates login credentials and starts a user session.
+app.post("/login", async (req, res) => {
+  const email = req.body.email?.trim().toLowerCase();
+  const password = req.body.password;
+
+  if (!email || !password) {
+    return res.status(400).render("login", {
+      errorMessage: "Email and password are required.",
+      formData: {
+        email,
+      },
+    });
+  }
+
+  try {
+    const [users] = await pool.execute(
+      `SELECT user_id, display_name, email, password_hash
+       FROM users
+       WHERE email = ?`,
+      [email]
+    );
+
+    if (users.length === 0) {
+      return res.status(401).render("login", {
+        errorMessage: "Email or password is incorrect.",
+        formData: {
+          email,
+        },
+      });
+    }
+
+    const user = users[0];
+
+    const passwordMatches = await bcrypt.compare(
+      password,
+      user.password_hash
+    );
+
+    if (!passwordMatches) {
+      return res.status(401).render("login", {
+        errorMessage: "Email or password is incorrect.",
+        formData: {
+          email,
+        },
+      });
+    }
+
+    req.session.user = {
+      userId: user.user_id,
+      displayName: user.display_name,
+      email: user.email,
+    };
+
+    res.redirect("/");
+  } catch (error) {
+    console.error("Login error:", error);
+
+    res.status(500).render("login", {
+      errorMessage: "Unable to log in. Please try again.",
+      formData: {
+        email,
+      },
+    });
+  }
+});
+
+// Destroys the current session and sends the user to the login page.
+app.post("/logout", (req, res) => {
+  req.session.destroy((error) => {
+    if (error) {
+      console.error("Logout error:", error);
+      return res.status(500).send("Unable to log out.");
+    }
+
+    res.redirect("/login");
+  });
 });
 
 // Home page
@@ -216,51 +291,336 @@ app.get("/preparedness", async (req, res) => {
   }
 });
 
-// Displays all community reports.
-app.get("/reports", (req, res) => {
-  const sampleReports = [
-    {
-      report_id: 1,
-      display_name: "Sample User",
-      report_title: "Earthquake: Minor shaking reported",
-      disaster_type: "Earthquake",
-      location: "Monterey, California",
-      severity: "Minor",
-      status: "Resolved",
-      event_date: "2026-08-02",
-      description: "Brief shaking was reported with no visible damage.",
-    },
-  ];
+// Retrieves and displays all community reports.
+app.get("/reports", requireLogin, async (req, res) => {
+  try {
+    const sql = `
+      SELECT
+        community_reports.*,
+        users.display_name,
+        DATE_FORMAT(
+          community_reports.event_date,
+          '%Y-%m-%d'
+        ) AS event_date
+      FROM community_reports
+      JOIN users
+        ON community_reports.user_id = users.user_id
+      ORDER BY community_reports.created_at DESC
+    `;
 
-  res.render("reports", {
-    reports: sampleReports,
-  });
+    const [rows] = await pool.query(sql);
+
+    res.render("reports", {
+      reports: rows,
+    });
+  } catch (error) {
+    console.error("Reports error:", error);
+
+    res.status(500).send(
+      "Unable to retrieve community reports."
+    );
+  }
 });
 
 // Displays the form for adding a community report.
-app.get("/report/new", (req, res) => {
+app.get("/report/new", requireLogin, (req, res) => {
   res.render("newReport", {
-    displayName:
-      req.session.user?.displayName || "Logged-in User",
+    displayName: req.session.user.displayName,
   });
 });
 
-// Displays a temporary pre-filled edit form.
-app.get("/report/edit", (req, res) => {
-  const sampleReport = {
-    report_id: 1,
-    report_title: "Earthquake: Minor shaking reported",
-    disaster_type: "Earthquake",
-    location: "Monterey, California",
-    severity: "Minor",
-    status: "Resolved",
-    event_date: "2026-08-02",
-    description: "Brief shaking was reported with no visible damage.",
-  };
+// Creates a community report for the logged-in user.
+app.post("/report/new", async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
 
-  res.render("editReport", {
-    report: sampleReport,
-  });
+  let disasterType = req.body.disaster_type;
+
+  if (disasterType === "Other") {
+    disasterType = req.body.other_disaster_type?.trim();
+  }
+
+  const reportTitle = req.body.report_title?.trim();
+  const location = req.body.location?.trim();
+  const severity = req.body.severity;
+  const status = req.body.status;
+  const eventDate = req.body.event_date;
+  const description = req.body.description?.trim();
+
+  if (
+    !reportTitle ||
+    !location ||
+    !disasterType ||
+    !severity ||
+    !status ||
+    !eventDate ||
+    !description
+  ) {
+    return res.status(400).send("All report fields are required.");
+  }
+
+  try {
+    const sql = `
+      INSERT INTO community_reports
+        (
+          user_id,
+          report_title,
+          disaster_type,
+          location,
+          severity,
+          status,
+          event_date,
+          description
+        )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const params = [
+      req.session.user.userId,
+      reportTitle,
+      disasterType,
+      location,
+      severity,
+      status,
+      eventDate,
+      description,
+    ];
+
+    await pool.execute(sql, params);
+
+    res.redirect("/reports");
+  } catch (error) {
+    console.error("Create report error:", error);
+    res.status(500).send("Unable to create the report.");
+  }
+});
+
+// TODO: REMOVE after Morgan completes the real login route.
+// TEMPORARY: Logs in a specific database user for testing.
+app.get("/dev-login", async (req, res) => {
+  const userId = req.query.userId;
+
+  if (!userId) {
+    return res.send(
+      "Enter a user ID in the URL. Example: /dev-login?userId=1"
+    );
+  }
+
+  try {
+    const [users] = await pool.execute(
+      `
+        SELECT user_id, display_name, email
+        FROM users
+        WHERE user_id = ?
+      `,
+      [userId]
+    );
+
+    if (users.length === 0) {
+      return res.send("That user does not exist.");
+    }
+
+    const user = users[0];
+
+    req.session.user = {
+      userId: user.user_id,
+      displayName: user.display_name,
+      email: user.email,
+    };
+
+    res.redirect("/reports");
+
+  } catch (error) {
+    console.error("Temporary login error:", error);
+    res.status(500).send("Unable to create the test session.");
+  }
+});
+
+// Displays the edit form with the selected report's current data.
+app.get("/report/edit", requireLogin, async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
+  const reportId = req.query.reportId;
+  const userId = req.session.user.userId;
+
+  if (!reportId) {
+    return res.redirect("/reports");
+  }
+
+  try {
+    const sql = `
+      SELECT
+        report_id,
+        user_id,
+        report_title,
+        disaster_type,
+        location,
+        severity,
+        status,
+        DATE_FORMAT(event_date, '%Y-%m-%d') AS event_date,
+        description
+      FROM community_reports
+      WHERE report_id = ?
+        AND user_id = ?
+    `;
+
+    const [rows] = await pool.execute(sql, [
+      reportId,
+      userId,
+    ]);
+
+    if (rows.length === 0) {
+      return res.status(404).send(
+        "Report not found or you do not have permission to edit it."
+      );
+    }
+
+    res.render("editReport", {
+      report: rows[0],
+    });
+
+  } catch (error) {
+    console.error("Edit report error:", error);
+
+    res.status(500).send(
+      "Unable to load the report."
+    );
+  }
+});
+
+// Updates a community report owned by the logged-in user.
+app.post("/report/edit", async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
+  const reportId = req.body.report_id;
+  const userId = req.session.user.userId;
+
+  let disasterType = req.body.disaster_type;
+
+  if (disasterType === "Other") {
+    disasterType = req.body.other_disaster_type?.trim();
+  }
+
+  const reportTitle = req.body.report_title?.trim();
+  const location = req.body.location?.trim();
+  const severity = req.body.severity;
+  const status = req.body.status;
+  const eventDate = req.body.event_date;
+  const description = req.body.description?.trim();
+
+  if (
+    !reportId ||
+    !reportTitle ||
+    !location ||
+    !disasterType ||
+    !severity ||
+    !status ||
+    !eventDate ||
+    !description
+  ) {
+    return res.status(400).send("All report fields are required.");
+  }
+
+  try {
+    const sql = `
+      UPDATE community_reports
+      SET
+        report_title = ?,
+        disaster_type = ?,
+        location = ?,
+        severity = ?,
+        status = ?,
+        event_date = ?,
+        description = ?,
+        updated_at = NOW()
+      WHERE report_id = ?
+        AND user_id = ?
+    `;
+
+    const params = [
+      reportTitle,
+      disasterType,
+      location,
+      severity,
+      status,
+      eventDate,
+      description,
+      reportId,
+      userId,
+    ];
+
+    const [result] = await pool.execute(sql, params);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).send(
+        "Report not found or you do not have permission to edit it."
+      );
+    }
+
+    res.redirect("/reports");
+
+  } catch (error) {
+    console.error("Update report error:", error);
+
+    res.status(500).send(
+      "Unable to update the report."
+    );
+  }
+});
+
+// Deletes selected reports owned by the logged-in user.
+app.post("/report/delete", async (req, res) => {
+
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
+  let reportIds = req.body.report_ids;
+
+  if (!reportIds) {
+    return res.redirect("/reports");
+  }
+
+  // If only one checkbox was selected,
+  // Express gives us a string instead of an array.
+  if (!Array.isArray(reportIds)) {
+    reportIds = [reportIds];
+  }
+
+  try {
+
+    const placeholders = reportIds
+      .map(() => "?")
+      .join(", ");
+
+    const sql = `
+      DELETE FROM community_reports
+      WHERE report_id IN (${placeholders})
+        AND user_id = ?
+    `;
+
+    const params = [
+      ...reportIds,
+      req.session.user.userId,
+    ];
+
+    await pool.execute(sql, params);
+
+    res.redirect("/reports");
+
+  } catch (error) {
+
+    console.error("Delete report error:", error);
+
+    res.status(500).send(
+      "Unable to delete the selected reports."
+    );
+  }
 });
 
 // Temporary database test
@@ -277,29 +637,6 @@ app.get("/dbTest", async (req, res) => {
   }
 });
 
-// Temporary test route to confirms the USGS API is reachable
-// Using my personal db for now
-app.get("/earthquakeTest", async (req, res) => {
-  try {
-    const apiUrl =
-      "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=time&limit=5";
-
-    const apiResponse = await fetch(apiUrl);
-
-    if (!apiResponse.ok) {
-      throw new Error(`USGS API responded with status ${apiResponse.status}`);
-    }
-
-    const data = await apiResponse.json();
-
-    console.log(data.features[0]);
-
-    res.send(data.features);
-  } catch (error) {
-    console.error("USGS test route error:", error);
-    res.status(500).send("USGS API test failed - check the console.");
-  }
-});
 
 // Displays recent earthquakes from the USGS Earthquake API.
 app.get("/earthquakes", async (req, res) => {
@@ -408,7 +745,7 @@ app.get("/earthquake/details", async (req, res) => {
 // Saves an earthquake to the logged-in user's account.
 // Login route sets it - update here if that changes.
 app.post("/earthquake/save", requireLogin, async (req, res) => {
-  const userId = req.session.user.user_id;
+  const userId = req.session.user.userId;
   const apiEventId = req.body.apiEventId;
   const title = req.body.title;
   const location = req.body.location;
@@ -445,6 +782,38 @@ app.post("/earthquake/save", requireLogin, async (req, res) => {
 
     console.error("Save earthquake error:", error);
     res.status(500).send("Unable to save this earthquake right now.");
+  }
+});
+
+// Displays the logged-in user's saved earthquakes.
+app.get("/saved", async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      `SELECT * FROM saved_earthquakes WHERE user_id = ? ORDER BY saved_at DESC`,
+      [req.session.user.user_id]
+    );
+
+    res.render("savedEarthquakes", { savedEarthquakes: rows });
+  } catch (error) {
+    console.error("Saved earthquakes error:", error);
+    res.render("savedEarthquakes", { savedEarthquakes: [] });
+  }
+});
+
+// Removes one saved earthquake 
+app.post("/saved/delete", async (req, res) => {
+  const savedId = req.body.savedId;
+
+  try {
+    await pool.execute(
+      `DELETE FROM saved_earthquakes WHERE saved_id = ? AND user_id = ?`,
+      [savedId, req.session.user.user_id]
+    );
+
+    res.redirect("/saved");
+  } catch (error) {
+    console.error("Remove saved earthquake error:", error);
+    res.redirect("/saved");
   }
 });
 
