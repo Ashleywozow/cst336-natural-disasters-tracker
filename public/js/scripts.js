@@ -1,3 +1,4 @@
+// CR
 
 // Community reports javascript
 // This is for the option "Other" so a text box can appear for the user to enter a disaster type
@@ -41,5 +42,44 @@ if (deleteModal && openDeleteModal && closeDeleteModal) {
       deleteModal.hidden = true;
     }
 
+  });
+}
+
+// Earthquakes 
+
+// ----- Remembers the user's preferred minimum magnitude filter -----
+const magnitudeSelect = document.querySelector("#minMagnitude");
+
+if (magnitudeSelect) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const storedMagnitude = localStorage.getItem("preferredMinMagnitude");
+
+  // If they landed on this page with no filter in the URL but have a
+  // saved preference, redirect once so the results reflect it.
+  if (!urlParams.has("minMagnitude") && storedMagnitude) {
+    window.location.href =
+      "/earthquakes?minMagnitude=" + encodeURIComponent(storedMagnitude);
+  }
+
+  // Saves whatever they pick so it's remembered next time they visit.
+  const magnitudeFilterForm = document.querySelector("#magnitudeFilterForm");
+
+  if (magnitudeFilterForm) {
+    magnitudeFilterForm.addEventListener("submit", function () {
+      localStorage.setItem("preferredMinMagnitude", magnitudeSelect.value);
+    });
+  }
+}
+
+// ----- Confirms before removing a saved earthquake -----
+const removeButtons = document.querySelectorAll(".removeSavedBtn");
+
+for (let i = 0; i < removeButtons.length; i++) {
+  removeButtons[i].addEventListener("click", function (event) {
+    const confirmed = confirm("Remove this saved earthquake?");
+
+    if (!confirmed) {
+      event.preventDefault();
+    }
   });
 }
