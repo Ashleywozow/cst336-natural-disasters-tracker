@@ -1,0 +1,34 @@
+<%- include("partials/head", { title: "My Saved Earthquakes" }) %>
+
+<%- include("partials/nav") %>
+
+<main>
+    <h1>My Saved Earthquakes</h1>
+
+    <% if (savedEarthquakes.length === 0) { %>
+
+        <p>You haven't saved any earthquakes yet.</p>
+
+    <% } else { %>
+
+        <% for (let saved of savedEarthquakes) { %>
+
+            <section class="earthquake-card">
+                <h2><%= saved.title %></h2>
+                <p><strong>Location:</strong> <%= saved.location %></p>
+                <p><strong>Magnitude:</strong> <%= saved.magnitude %></p>
+                <p><strong>Date:</strong> <%= saved.event_date %></p>
+
+                <% if (saved.personal_note) { %>
+                    <p><strong>Personal Note:</strong> <%= saved.personal_note %></p>
+                <% } %>
+
+                <p><a href="<%= saved.source_url %>" target="_blank">View Official Source</a></p>
+            </section>
+
+        <% } %>
+
+    <% } %>
+</main>
+
+<%- include("partials/footer") %>

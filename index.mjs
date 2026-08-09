@@ -31,8 +31,11 @@ app.use(
 );
 
 // Makes the logged-in user available in every EJS page.
+// TEMPORARY - fakes a logged-in session until login function is merged.
 app.use((req, res, next) => {
-  res.locals.currentUser = req.session.user || null;
+  if (!req.session.user) {
+    req.session.user = { user_id: 1, displayName: "Lee" };
+  }
   next();
 });
 
@@ -327,6 +330,9 @@ app.get("/earthquake/details", async (req, res) => {
 // Saves an earthquake to the logged-in user's account.
 // Login route sets it - update here if that changes.
 app.post("/earthquake/save", async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
   const userId = req.session.user.user_id;
   const apiEventId = req.body.apiEventId;
   const title = req.body.title;
@@ -364,6 +370,21 @@ app.post("/earthquake/save", async (req, res) => {
 
     console.error("Save earthquake error:", error);
     res.status(500).send("Unable to save this earthquake right now.");
+  }
+});
+
+// Displays the logged-in user's saved earthquakes.
+app.get("/saved", async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      `SELECT * FROM saved_earthquakes WHERE user_id = ? ORDER BY saved_at DESC`,
+      [req.session.user.user_id]
+    );
+
+    res.render("savedEarthquakes", { savedEarthquakes: rows });
+  } catch (error) {
+    console.error("Saved earthquakes error:", error);
+    res.render("savedEarthquakes", { savedEarthquakes: [] });
   }
 });
 
