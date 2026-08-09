@@ -417,7 +417,7 @@ app.get("/earthquake/details", async (req, res) => {
 // Saves an earthquake to the logged-in user's account.
 // Login route sets it - update here if that changes.
 app.post("/earthquake/save", requireLogin, async (req, res) => {
-  const userId = req.session.user.user_id;
+  const userId = req.session.user.userId;
   const apiEventId = req.body.apiEventId;
   const title = req.body.title;
   const location = req.body.location;
