@@ -227,7 +227,7 @@ app.get("/", (req, res) => {
 });
 
 // Displays all community reports.
-app.get("/reports", (req, res) => {
+app.get("/reports", requireLogin, (req, res) => {
   const sampleReports = [
     {
       report_id: 1,
