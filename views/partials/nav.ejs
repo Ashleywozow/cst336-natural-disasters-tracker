@@ -6,3 +6,22 @@
   <a href="/reports">Community Reports</a>
   <a href="/preparedness">Preparedness</a>
 </nav>
+
+<% if (currentUser) { %>
+
+  <span>
+    Welcome, <%= currentUser.displayName %>
+  </span>
+
+  <a href="/dashboard">Dashboard</a>
+
+  <form action="/logout" method="POST" style="display: inline;">
+    <button type="submit">Log Out</button>
+  </form>
+
+<% } else { %>
+
+  <a href="/signup">Sign Up</a>
+  <a href="/login">Log In</a>
+
+<% } %>

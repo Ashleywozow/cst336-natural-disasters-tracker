@@ -110,6 +110,8 @@ app.post("/signup", async (req, res) => {
       [displayName, email, passwordHash]
     );
 
+    
+
     // Sends the new user to the login page after signup succeeds.
     res.redirect("/login");
   } catch (error) {
@@ -125,9 +127,90 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-// Displays the login page.
+// Displays the login form.
 app.get("/login", (req, res) => {
-  res.render("login");
+  res.render("login", {
+    errorMessage: null,
+    formData: {},
+  });
+});
+
+// Validates login credentials and starts a user session.
+app.post("/login", async (req, res) => {
+  const email = req.body.email?.trim().toLowerCase();
+  const password = req.body.password;
+
+  if (!email || !password) {
+    return res.status(400).render("login", {
+      errorMessage: "Email and password are required.",
+      formData: {
+        email,
+      },
+    });
+  }
+
+  try {
+    const [users] = await pool.execute(
+      `SELECT user_id, display_name, email, password_hash
+       FROM users
+       WHERE email = ?`,
+      [email]
+    );
+
+    if (users.length === 0) {
+      return res.status(401).render("login", {
+        errorMessage: "Email or password is incorrect.",
+        formData: {
+          email,
+        },
+      });
+    }
+
+    const user = users[0];
+
+    const passwordMatches = await bcrypt.compare(
+      password,
+      user.password_hash
+    );
+
+    if (!passwordMatches) {
+      return res.status(401).render("login", {
+        errorMessage: "Email or password is incorrect.",
+        formData: {
+          email,
+        },
+      });
+    }
+
+    req.session.user = {
+      userId: user.user_id,
+      displayName: user.display_name,
+      email: user.email,
+    };
+
+    res.redirect("/");
+  } catch (error) {
+    console.error("Login error:", error);
+
+    res.status(500).render("login", {
+      errorMessage: "Unable to log in. Please try again.",
+      formData: {
+        email,
+      },
+    });
+  }
+});
+
+// Destroys the current session and sends the user to the login page.
+app.post("/logout", (req, res) => {
+  req.session.destroy((error) => {
+    if (error) {
+      console.error("Logout error:", error);
+      return res.status(500).send("Unable to log out.");
+    }
+
+    res.redirect("/login");
+  });
 });
 
 // Home page
@@ -136,7 +219,7 @@ app.get("/", (req, res) => {
 });
 
 // Displays all community reports.
-app.get("/reports", (req, res) => {
+app.get("/reports", requireLogin, (req, res) => {
   const sampleReports = [
     {
       report_id: 1,
@@ -157,15 +240,14 @@ app.get("/reports", (req, res) => {
 });
 
 // Displays the form for adding a community report.
-app.get("/report/new", (req, res) => {
+app.get("/report/new", requireLogin, (req, res) => {
   res.render("newReport", {
-    displayName:
-      req.session.user?.displayName || "Logged-in User",
+    displayName: req.session.user.displayName,
   });
 });
 
 // Displays a temporary pre-filled edit form.
-app.get("/report/edit", (req, res) => {
+app.get("/report/edit", requireLogin, (req, res) => {
   const sampleReport = {
     report_id: 1,
     report_title: "Earthquake: Minor shaking reported",
@@ -303,11 +385,8 @@ app.get("/earthquake/details", async (req, res) => {
 
 // Saves an earthquake to the logged-in user's account.
 // Login route sets it - update here if that changes.
-app.post("/earthquake/save", async (req, res) => {
-  if (!req.session.user) {
-    return res.redirect("/login");
-  }
-  const userId = req.session.user.user_id;
+app.post("/earthquake/save", requireLogin, async (req, res) => {
+  const userId = req.session.user.userId;
   const apiEventId = req.body.apiEventId;
   const title = req.body.title;
   const location = req.body.location;
