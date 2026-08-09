@@ -47,14 +47,6 @@ const pool = mysql.createPool({
   waitForConnections: true,
 });
 
-// Blocks a route until the user is logged in
-function requireLogin(req, res, next) {
-  if (!req.session.user) {
-    return res.redirect("/login");
-  }
-  next();
-}
-
 // Displays the account signup form.
 app.get("/signup", (req, res) => {
   res.render("signup", {
@@ -334,7 +326,7 @@ app.get("/earthquake/details", async (req, res) => {
 
 // Saves an earthquake to the logged-in user's account.
 // Login route sets it - update here if that changes.
-app.post("/earthquake/save", requireLogin, async (req, res) => {
+app.post("/earthquake/save", async (req, res) => {
   const userId = req.session.user.user_id;
   const apiEventId = req.body.apiEventId;
   const title = req.body.title;
