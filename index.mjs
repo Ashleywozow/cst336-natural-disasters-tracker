@@ -199,29 +199,6 @@ app.get("/dbTest", async (req, res) => {
   }
 });
 
-// Temporary test route to confirms the USGS API is reachable
-// Using my personal db for now
-app.get("/earthquakeTest", async (req, res) => {
-  try {
-    const apiUrl =
-      "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=time&limit=5";
-
-    const apiResponse = await fetch(apiUrl);
-
-    if (!apiResponse.ok) {
-      throw new Error(`USGS API responded with status ${apiResponse.status}`);
-    }
-
-    const data = await apiResponse.json();
-
-    console.log(data.features[0]);
-
-    res.send(data.features);
-  } catch (error) {
-    console.error("USGS test route error:", error);
-    res.status(500).send("USGS API test failed - check the console.");
-  }
-});
 
 // Displays recent earthquakes from the USGS Earthquake API.
 app.get("/earthquakes", async (req, res) => {
