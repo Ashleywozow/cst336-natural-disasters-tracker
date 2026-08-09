@@ -7,16 +7,16 @@ import "dotenv/config";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// EJS configuration
+// EJS configuration.
 app.set("view engine", "ejs");
 
-// Public CSS, JavaScript, and images
+// Serves CSS, JavaScript, and images from the public folder.
 app.use(express.static("public"));
 
-// Allows Express to read HTML form submissions
+// Allows Express to read HTML form submissions.
 app.use(express.urlencoded({ extended: true }));
 
-// Configures sessions so users can stay logged in between requests.
+// Configures sessions so users stay logged in between requests.
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -30,13 +30,13 @@ app.use(
   })
 );
 
-// Makes the logged-in user available in every EJS page.
+// Makes the logged-in user available to every EJS page.
 app.use((req, res, next) => {
   res.locals.currentUser = req.session.user || null;
   next();
 });
 
-// Database connection pool
+// Creates the MySQL database connection pool.
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -64,13 +64,12 @@ app.get("/signup", (req, res) => {
   });
 });
 
-// Validates the signpu form, hashes the pssword, and creates a new user.
+// Validates the signup form, hashes the password, and creates a user.
 app.post("/signup", async (req, res) => {
   const displayName = req.body.displayName?.trim();
   const email = req.body.email?.trim().toLowerCase();
   const password = req.body.password;
 
-  // Sends the user back to the form if any field is empty.
   if (!displayName || !email || !password) {
     return res.status(400).render("signup", {
       errorMessage: "All fields are required.",
@@ -81,7 +80,6 @@ app.post("/signup", async (req, res) => {
     });
   }
 
-  // Requires password to contian at least eight characters.
   if (password.length < 8) {
     return res.status(400).render("signup", {
       errorMessage: "Password must be at least 8 characters.",
@@ -93,7 +91,6 @@ app.post("/signup", async (req, res) => {
   }
 
   try {
-    // Checks whether an account already uses this email address.
     const [existingUsers] = await pool.execute(
       "SELECT user_id FROM users WHERE email = ?",
       [email]
@@ -109,19 +106,14 @@ app.post("/signup", async (req, res) => {
       });
     }
 
-    // Converts the password into a secure bcrypt hash.
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Inserts the new user into the users table.
     await pool.execute(
       `INSERT INTO users (display_name, email, password_hash)
        VALUES (?, ?, ?)`,
       [displayName, email, passwordHash]
     );
 
-    
-
-    // Sends the new user to the login page after signup succeeds.
     res.redirect("/login");
   } catch (error) {
     console.error("Signup error:", error);
@@ -191,6 +183,7 @@ app.post("/login", async (req, res) => {
       });
     }
 
+    // Stores the logged-in user using JavaScript camelCase names.
     req.session.user = {
       userId: user.user_id,
       displayName: user.display_name,
@@ -222,13 +215,13 @@ app.post("/logout", (req, res) => {
   });
 });
 
-// Home page
+// Displays the home page.
 app.get("/", (req, res) => {
   res.render("index");
 });
 
 // Displays all community reports.
-app.get("/reports", requireLogin, (req, res) => {
+app.get("/reports", (req, res) => {
   const sampleReports = [
     {
       report_id: 1,
@@ -273,7 +266,7 @@ app.get("/report/edit", requireLogin, (req, res) => {
   });
 });
 
-// Temporary database test
+// Tests the MySQL database connection.
 app.get("/dbTest", async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -282,11 +275,10 @@ app.get("/dbTest", async (req, res) => {
 
     res.send(rows);
   } catch (error) {
-    console.error(error);
+    console.error("Database test error:", error);
     res.status(500).send("Database connection failed");
   }
 });
-
 
 // Displays recent earthquakes from the USGS Earthquake API.
 app.get("/earthquakes", async (req, res) => {
@@ -303,13 +295,15 @@ app.get("/earthquakes", async (req, res) => {
     const apiResponse = await fetch(apiUrl);
 
     if (!apiResponse.ok) {
-      throw new Error(`USGS API responded with status ${apiResponse.status}`);
+      throw new Error(
+        `USGS API responded with status ${apiResponse.status}`
+      );
     }
 
     const data = await apiResponse.json();
 
-    // Builds a plain array with just the fields the view needs.
     const earthquakes = [];
+
     for (let i = 0; i < data.features.length; i++) {
       const feature = data.features[i];
 
@@ -317,14 +311,16 @@ app.get("/earthquakes", async (req, res) => {
         id: feature.id,
         place: feature.properties.place,
         magnitude: feature.properties.mag,
-        time: new Date(feature.properties.time).toLocaleString(),
+        time: new Date(
+          feature.properties.time
+        ).toLocaleString(),
         url: feature.properties.url,
       });
     }
 
     res.render("earthquakes", {
-      earthquakes: earthquakes,
-      minMagnitude: minMagnitude,
+      earthquakes,
+      minMagnitude,
       errorMessage: null,
     });
   } catch (error) {
@@ -332,14 +328,14 @@ app.get("/earthquakes", async (req, res) => {
 
     res.render("earthquakes", {
       earthquakes: [],
-      minMagnitude: minMagnitude,
+      minMagnitude,
       errorMessage:
         "Unable to load earthquake data right now. Please try again later.",
     });
   }
 });
 
-// Displays details for a single earthquake, looked up by its USGS event id.
+// Displays details for one earthquake using its USGS event ID.
 app.get("/earthquake/details", async (req, res) => {
   const eventId = req.query.id;
 
@@ -352,15 +348,17 @@ app.get("/earthquake/details", async (req, res) => {
     const apiResponse = await fetch(apiUrl);
 
     if (!apiResponse.ok) {
-      throw new Error(`USGS API responded with status ${apiResponse.status}`);
+      throw new Error(
+        `USGS API responded with status ${apiResponse.status}`
+      );
     }
 
     const data = await apiResponse.json();
 
-    // A single-event query normally returns one Feature directly, but
-    // this also handles a FeatureCollection just in case.
     const feature =
-      data.type === "FeatureCollection" ? data.features[0] : data;
+      data.type === "FeatureCollection"
+        ? data.features[0]
+        : data;
 
     if (!feature) {
       throw new Error("Earthquake not found");
@@ -370,15 +368,21 @@ app.get("/earthquake/details", async (req, res) => {
       id: feature.id,
       place: feature.properties.place,
       magnitude: feature.properties.mag,
-      time: new Date(feature.properties.time).toLocaleString(),
-      isoTime: new Date(feature.properties.time).toISOString().slice(0, 10),
+      time: new Date(
+        feature.properties.time
+      ).toLocaleString(),
+      isoTime: new Date(
+        feature.properties.time
+      )
+        .toISOString()
+        .slice(0, 10),
       url: feature.properties.url,
       longitude: feature.geometry.coordinates[0],
       latitude: feature.geometry.coordinates[1],
     };
 
     res.render("earthquakeDetails", {
-      earthquake: earthquake,
+      earthquake,
       errorMessage: null,
     });
   } catch (error) {
@@ -392,81 +396,111 @@ app.get("/earthquake/details", async (req, res) => {
   }
 });
 
-// Saves an earthquake to the login user's account.
-app.post("/earthquake/save", requireLogin, async (req, res) => {
+// Saves an earthquake to the logged-in user's account.
+app.post(
+  "/earthquake/save",
+  requireLogin,
+  async (req, res) => {
+    const userId = req.session.user.userId;
+
+    const apiEventId = req.body.apiEventId;
+    const title = req.body.title;
+    const location = req.body.location;
+    const magnitude = req.body.magnitude;
+    const eventDate = req.body.eventDate;
+    const sourceUrl = req.body.sourceUrl;
+    const personalNote = req.body.personalNote;
+
+    try {
+      await pool.execute(
+        `INSERT INTO saved_earthquakes
+          (
+            user_id,
+            api_event_id,
+            title,
+            location,
+            magnitude,
+            event_date,
+            source_url,
+            personal_note
+          )
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          userId,
+          apiEventId,
+          title,
+          location,
+          magnitude,
+          eventDate,
+          sourceUrl,
+          personalNote || null,
+        ]
+      );
+
+      res.redirect("/saved");
+    } catch (error) {
+      if (error.code === "ER_DUP_ENTRY") {
+        return res.redirect("/saved");
+      }
+
+      console.error("Save earthquake error:", error);
+      res
+        .status(500)
+        .send("Unable to save this earthquake right now.");
+    }
+  }
+);
+
+// Displays only the logged-in user's saved earthquakes.
+app.get("/saved", requireLogin, async (req, res) => {
   const userId = req.session.user.userId;
 
-  const apiEventId = req.body.apiEventId;
-  const title = req.body.title;
-  const location = req.body.location;
-  const magnitude = req.body.magnitude;
-  const eventDate = req.body.eventDate;
-  const sourceUrl = req.body.sourceUrl;
-  const personalNote = req.body.personalNote;
-
-  try {
-    await pool.execute(
-      `INSERT INTO saved_earthquakes
-        (user_id, api_event_id, title, location, magnitude, event_date, source_url, personal_note)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        userId,
-        apiEventId,
-        title,
-        location,
-        magnitude,
-        eventDate,
-        sourceUrl,
-        personalNote || null,
-      ]
-    );
-
-    res.redirect("/saved");
-  } catch (error) {
-
-    // A duplicate-key error just means this user already saved this
-    // earthquake - send them to their saved list instead of erroring.
-    if (error.code === "ER_DUP_ENTRY") {
-      return res.redirect("/saved");
-    }
-
-    console.error("Save earthquake error:", error);
-    res.status(500).send("Unable to save this earthquake right now.");
-  }
-});
-
-// Displays the logged-in user's saved earthquakes.
-app.get("/saved", async (req, res) => {
   try {
     const [rows] = await pool.execute(
-      `SELECT * FROM saved_earthquakes WHERE user_id = ? ORDER BY saved_at DESC`,
-      [req.session.user.user_id]
+      `SELECT *
+       FROM saved_earthquakes
+       WHERE user_id = ?
+       ORDER BY saved_at DESC`,
+      [userId]
     );
 
-    res.render("savedEarthquakes", { savedEarthquakes: rows });
+    res.render("savedEarthquakes", {
+      savedEarthquakes: rows,
+    });
   } catch (error) {
     console.error("Saved earthquakes error:", error);
-    res.render("savedEarthquakes", { savedEarthquakes: [] });
+
+    res.render("savedEarthquakes", {
+      savedEarthquakes: [],
+    });
   }
 });
 
-// Removes one saved earthquake 
-app.post("/saved/delete", async (req, res) => {
-  const savedId = req.body.savedId;
+// Removes one saved earthquake owned by the logged-in user.
+app.post(
+  "/saved/delete",
+  requireLogin,
+  async (req, res) => {
+    const userId = req.session.user.userId;
+    const savedId = req.body.savedId;
 
-  try {
-    await pool.execute(
-      `DELETE FROM saved_earthquakes WHERE saved_id = ? AND user_id = ?`,
-      [savedId, req.session.user.user_id]
-    );
+    try {
+      await pool.execute(
+        `DELETE FROM saved_earthquakes
+         WHERE saved_id = ?
+         AND user_id = ?`,
+        [savedId, userId]
+      );
 
-    res.redirect("/saved");
-  } catch (error) {
-    console.error("Remove saved earthquake error:", error);
-    res.redirect("/saved");
+      res.redirect("/saved");
+    } catch (error) {
+      console.error("Remove saved earthquake error:", error);
+      res.redirect("/saved");
+    }
   }
-});
+);
 
+// Starts the Express server.
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
