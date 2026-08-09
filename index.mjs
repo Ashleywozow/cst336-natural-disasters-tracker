@@ -31,8 +31,11 @@ app.use(
 );
 
 // Makes the logged-in user available in every EJS page.
+// TEMPORARY - fakes a logged-in session until login function is merged.
 app.use((req, res, next) => {
-  res.locals.currentUser = req.session.user || null;
+  if (!req.session.user) {
+    req.session.user = { user_id: 1, displayName: "Lee" };
+  }
   next();
 });
 
@@ -46,14 +49,6 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   waitForConnections: true,
 });
-
-// Blocks a route until the user is logged in
-function requireLogin(req, res, next) {
-  if (!req.session.user) {
-    return res.redirect("/login");
-  }
-  next();
-}
 
 // Displays the account signup form.
 app.get("/signup", (req, res) => {
@@ -204,29 +199,6 @@ app.get("/dbTest", async (req, res) => {
   }
 });
 
-// Temporary test route to confirms the USGS API is reachable
-// Using my personal db for now
-app.get("/earthquakeTest", async (req, res) => {
-  try {
-    const apiUrl =
-      "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=time&limit=5";
-
-    const apiResponse = await fetch(apiUrl);
-
-    if (!apiResponse.ok) {
-      throw new Error(`USGS API responded with status ${apiResponse.status}`);
-    }
-
-    const data = await apiResponse.json();
-
-    console.log(data.features[0]);
-
-    res.send(data.features);
-  } catch (error) {
-    console.error("USGS test route error:", error);
-    res.status(500).send("USGS API test failed - check the console.");
-  }
-});
 
 // Displays recent earthquakes from the USGS Earthquake API.
 app.get("/earthquakes", async (req, res) => {
@@ -334,7 +306,10 @@ app.get("/earthquake/details", async (req, res) => {
 
 // Saves an earthquake to the logged-in user's account.
 // Login route sets it - update here if that changes.
-app.post("/earthquake/save", requireLogin, async (req, res) => {
+app.post("/earthquake/save", async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
   const userId = req.session.user.user_id;
   const apiEventId = req.body.apiEventId;
   const title = req.body.title;
@@ -372,6 +347,38 @@ app.post("/earthquake/save", requireLogin, async (req, res) => {
 
     console.error("Save earthquake error:", error);
     res.status(500).send("Unable to save this earthquake right now.");
+  }
+});
+
+// Displays the logged-in user's saved earthquakes.
+app.get("/saved", async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      `SELECT * FROM saved_earthquakes WHERE user_id = ? ORDER BY saved_at DESC`,
+      [req.session.user.user_id]
+    );
+
+    res.render("savedEarthquakes", { savedEarthquakes: rows });
+  } catch (error) {
+    console.error("Saved earthquakes error:", error);
+    res.render("savedEarthquakes", { savedEarthquakes: [] });
+  }
+});
+
+// Removes one saved earthquake 
+app.post("/saved/delete", async (req, res) => {
+  const savedId = req.body.savedId;
+
+  try {
+    await pool.execute(
+      `DELETE FROM saved_earthquakes WHERE saved_id = ? AND user_id = ?`,
+      [savedId, req.session.user.user_id]
+    );
+
+    res.redirect("/saved");
+  } catch (error) {
+    console.error("Remove saved earthquake error:", error);
+    res.redirect("/saved");
   }
 });
 
