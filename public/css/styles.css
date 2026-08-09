@@ -25,3 +25,94 @@ nav a {
 .error-message {
   color: #b00020;
 }
+
+
+/* Shelter Sidebar Styling */
+.shelter-sidebar {
+  background-color: #F2E5C6;
+  border: 3px solid #3B2E26;
+  border-radius: 20px;
+  padding: 20px;
+  margin: 20px;
+  max-width: 320px;
+  position: sticky;
+  top: 20px;
+}
+
+#shelter-title {
+  font-size: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.shelter-sidebar h2 {
+  margin-top: 0;
+}
+
+.shelter-sidebar h3 {
+  margin-bottom: 5px;
+}
+
+.shelter-sidebar ul {
+  padding-left: 20px;
+}
+
+.shelter-sidebar a {
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.shelter-note {
+  font-size: 0.9rem;
+}
+
+.page-with-sidebar {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.page-content {
+  flex: 1;
+}
+
+/* CR delete report modal styling */
+.delete-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  background-color: rgba(0, 0, 0, 0.5);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.delete-modal[hidden] {
+  display: none;
+}
+
+.delete-modal-content {
+  background-color: white;
+  padding: 25px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+}
+
+.delete-report-option {
+  margin-bottom: 10px;
+}
+
+/* Community Report Form Styling */
+.report-card {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 20px;
+  margin: 20px;
+  width: 50%;
+}

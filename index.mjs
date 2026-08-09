@@ -218,25 +218,35 @@ app.get("/", (req, res) => {
   res.render("index");
 });
 
-// Displays all community reports.
-app.get("/reports", requireLogin, (req, res) => {
-  const sampleReports = [
-    {
-      report_id: 1,
-      display_name: "Sample User",
-      report_title: "Earthquake: Minor shaking reported",
-      disaster_type: "Earthquake",
-      location: "Monterey, California",
-      severity: "Minor",
-      status: "Resolved",
-      event_date: "2026-08-02",
-      description: "Brief shaking was reported with no visible damage.",
-    },
-  ];
+// Retrieves and displays all community reports.
+app.get("/reports", requireLogin, async (req, res) => {
+  try {
+    const sql = `
+      SELECT
+        community_reports.*,
+        users.display_name,
+        DATE_FORMAT(
+          community_reports.event_date,
+          '%Y-%m-%d'
+        ) AS event_date
+      FROM community_reports
+      JOIN users
+        ON community_reports.user_id = users.user_id
+      ORDER BY community_reports.created_at DESC
+    `;
 
-  res.render("reports", {
-    reports: sampleReports,
-  });
+    const [rows] = await pool.query(sql);
+
+    res.render("reports", {
+      reports: rows,
+    });
+  } catch (error) {
+    console.error("Reports error:", error);
+
+    res.status(500).send(
+      "Unable to retrieve community reports."
+    );
+  }
 });
 
 // Displays the form for adding a community report.
@@ -246,22 +256,298 @@ app.get("/report/new", requireLogin, (req, res) => {
   });
 });
 
-// Displays a temporary pre-filled edit form.
-app.get("/report/edit", requireLogin, (req, res) => {
-  const sampleReport = {
-    report_id: 1,
-    report_title: "Earthquake: Minor shaking reported",
-    disaster_type: "Earthquake",
-    location: "Monterey, California",
-    severity: "Minor",
-    status: "Resolved",
-    event_date: "2026-08-02",
-    description: "Brief shaking was reported with no visible damage.",
-  };
+// Creates a community report for the logged-in user.
+app.post("/report/new", async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
 
-  res.render("editReport", {
-    report: sampleReport,
-  });
+  let disasterType = req.body.disaster_type;
+
+  if (disasterType === "Other") {
+    disasterType = req.body.other_disaster_type?.trim();
+  }
+
+  const reportTitle = req.body.report_title?.trim();
+  const location = req.body.location?.trim();
+  const severity = req.body.severity;
+  const status = req.body.status;
+  const eventDate = req.body.event_date;
+  const description = req.body.description?.trim();
+
+  if (
+    !reportTitle ||
+    !location ||
+    !disasterType ||
+    !severity ||
+    !status ||
+    !eventDate ||
+    !description
+  ) {
+    return res.status(400).send("All report fields are required.");
+  }
+
+  try {
+    const sql = `
+      INSERT INTO community_reports
+        (
+          user_id,
+          report_title,
+          disaster_type,
+          location,
+          severity,
+          status,
+          event_date,
+          description
+        )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const params = [
+      req.session.user.userId,
+      reportTitle,
+      disasterType,
+      location,
+      severity,
+      status,
+      eventDate,
+      description,
+    ];
+
+    await pool.execute(sql, params);
+
+    res.redirect("/reports");
+  } catch (error) {
+    console.error("Create report error:", error);
+    res.status(500).send("Unable to create the report.");
+  }
+});
+
+// TODO: REMOVE after Morgan completes the real login route.
+// TEMPORARY: Logs in a specific database user for testing.
+app.get("/dev-login", async (req, res) => {
+  const userId = req.query.userId;
+
+  if (!userId) {
+    return res.send(
+      "Enter a user ID in the URL. Example: /dev-login?userId=1"
+    );
+  }
+
+  try {
+    const [users] = await pool.execute(
+      `
+        SELECT user_id, display_name, email
+        FROM users
+        WHERE user_id = ?
+      `,
+      [userId]
+    );
+
+    if (users.length === 0) {
+      return res.send("That user does not exist.");
+    }
+
+    const user = users[0];
+
+    req.session.user = {
+      userId: user.user_id,
+      displayName: user.display_name,
+      email: user.email,
+    };
+
+    res.redirect("/reports");
+
+  } catch (error) {
+    console.error("Temporary login error:", error);
+    res.status(500).send("Unable to create the test session.");
+  }
+});
+
+// Displays the edit form with the selected report's current data.
+app.get("/report/edit", requireLogin, async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
+  const reportId = req.query.reportId;
+  const userId = req.session.user.userId;
+
+  if (!reportId) {
+    return res.redirect("/reports");
+  }
+
+  try {
+    const sql = `
+      SELECT
+        report_id,
+        user_id,
+        report_title,
+        disaster_type,
+        location,
+        severity,
+        status,
+        DATE_FORMAT(event_date, '%Y-%m-%d') AS event_date,
+        description
+      FROM community_reports
+      WHERE report_id = ?
+        AND user_id = ?
+    `;
+
+    const [rows] = await pool.execute(sql, [
+      reportId,
+      userId,
+    ]);
+
+    if (rows.length === 0) {
+      return res.status(404).send(
+        "Report not found or you do not have permission to edit it."
+      );
+    }
+
+    res.render("editReport", {
+      report: rows[0],
+    });
+
+  } catch (error) {
+    console.error("Edit report error:", error);
+
+    res.status(500).send(
+      "Unable to load the report."
+    );
+  }
+});
+
+// Updates a community report owned by the logged-in user.
+app.post("/report/edit", async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
+  const reportId = req.body.report_id;
+  const userId = req.session.user.userId;
+
+  let disasterType = req.body.disaster_type;
+
+  if (disasterType === "Other") {
+    disasterType = req.body.other_disaster_type?.trim();
+  }
+
+  const reportTitle = req.body.report_title?.trim();
+  const location = req.body.location?.trim();
+  const severity = req.body.severity;
+  const status = req.body.status;
+  const eventDate = req.body.event_date;
+  const description = req.body.description?.trim();
+
+  if (
+    !reportId ||
+    !reportTitle ||
+    !location ||
+    !disasterType ||
+    !severity ||
+    !status ||
+    !eventDate ||
+    !description
+  ) {
+    return res.status(400).send("All report fields are required.");
+  }
+
+  try {
+    const sql = `
+      UPDATE community_reports
+      SET
+        report_title = ?,
+        disaster_type = ?,
+        location = ?,
+        severity = ?,
+        status = ?,
+        event_date = ?,
+        description = ?,
+        updated_at = NOW()
+      WHERE report_id = ?
+        AND user_id = ?
+    `;
+
+    const params = [
+      reportTitle,
+      disasterType,
+      location,
+      severity,
+      status,
+      eventDate,
+      description,
+      reportId,
+      userId,
+    ];
+
+    const [result] = await pool.execute(sql, params);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).send(
+        "Report not found or you do not have permission to edit it."
+      );
+    }
+
+    res.redirect("/reports");
+
+  } catch (error) {
+    console.error("Update report error:", error);
+
+    res.status(500).send(
+      "Unable to update the report."
+    );
+  }
+});
+
+// Deletes selected reports owned by the logged-in user.
+app.post("/report/delete", async (req, res) => {
+
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
+
+  let reportIds = req.body.report_ids;
+
+  if (!reportIds) {
+    return res.redirect("/reports");
+  }
+
+  // If only one checkbox was selected,
+  // Express gives us a string instead of an array.
+  if (!Array.isArray(reportIds)) {
+    reportIds = [reportIds];
+  }
+
+  try {
+
+    const placeholders = reportIds
+      .map(() => "?")
+      .join(", ");
+
+    const sql = `
+      DELETE FROM community_reports
+      WHERE report_id IN (${placeholders})
+        AND user_id = ?
+    `;
+
+    const params = [
+      ...reportIds,
+      req.session.user.userId,
+    ];
+
+    await pool.execute(sql, params);
+
+    res.redirect("/reports");
+
+  } catch (error) {
+
+    console.error("Delete report error:", error);
+
+    res.status(500).send(
+      "Unable to delete the selected reports."
+    );
+  }
 });
 
 // Temporary database test

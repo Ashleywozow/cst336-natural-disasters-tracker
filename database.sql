@@ -18,9 +18,9 @@ CREATE TABLE community_reports (
   status VARCHAR(20) NOT NULL,
   event_date DATE NOT NULL,
   description TEXT NOT NULL,
+
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ON UPDATE CURRENT_TIMESTAMP,
+  updated_at DATETIME NULL,
 
   FOREIGN KEY (user_id)
     REFERENCES users(user_id)
