@@ -48,9 +48,11 @@ const pool = mysql.createPool({
 });
 
 function requireLogin(req, res, next) { 
-  if (!req.session.user) { 
+  if (!req.session.user) {
+    req.session.returnTo = req.originalUrl;
     return res.redirect("/login"); 
-  } next(); 
+  }
+  next(); 
 }
 
 // Displays the account signup form.
@@ -194,7 +196,7 @@ app.post("/login", async (req, res) => {
       email: user.email,
     };
 
-    res.redirect("/");
+    res.redirect(req.session.returnTo || "/");
   } catch (error) {
     console.error("Login error:", error);
 

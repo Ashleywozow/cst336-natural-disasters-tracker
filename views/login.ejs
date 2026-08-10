@@ -1,14 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login | Natural Disasters Tracker</title>
-</head>
+<%- include("partials/head", { title: "Login" }) %>
 
-<body>
+<%- include("partials/nav") %>
+
   <main>
-    <h1>Login</h1>
+    <h1 class="signupLogin">Login</h1>
 
     <% if (errorMessage) { %>
       <p><%= errorMessage %></p>
@@ -41,7 +36,7 @@
       <button type="submit">Log In</button>
     </form>
 
-    <p>
+    <p class="signupLoginlink">
       Do not have an account?
       <a href="/signup">Create one</a>
     </p>
