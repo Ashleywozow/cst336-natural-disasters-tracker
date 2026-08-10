@@ -421,6 +421,7 @@ input[type="submit"] {
     align-items: center;
     justify-content: center;
     min-height: 44px;
+    margin: 10px;
     padding: 0.65rem 1.1rem;
     color: #fffaf2;
     font: inherit;
