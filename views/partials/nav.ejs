@@ -12,8 +12,8 @@
   <div class="nav-links-group">
     <a href="/">Home</a>
     <a href="/earthquakes">Earthquakes</a>
-    <a href="/events">Natural Events</a>
     <a href="/saved">Saved Earthquakes</a>
+    <a href="/events">Natural Events</a>
     <a href="/reports">Community Reports</a>
     <a href="/preparedness">Preparedness</a>
   </div>
@@ -22,7 +22,6 @@
     <% if (currentUser) { %>
 
       <span>Welcome, <%= currentUser.displayName %></span>
-      <a href="/dashboard">Dashboard</a>
 
       <form action="/logout" method="POST">
         <button type="submit">Log Out</button>
