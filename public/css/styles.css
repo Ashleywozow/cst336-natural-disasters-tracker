@@ -1,167 +1,163 @@
 body {
-  font-family: Arial, sans-serif;
-  margin: 0;
+    font-family: Arial, sans-serif;
+    margin: 0;
 }
 
 nav,
 main,
 footer {
-  padding: 1rem;
+    padding: 1rem;
 }
 
 nav a {
-  margin-right: 1rem;
+    margin-right: 1rem;
 }
 
-/* Temp - Earthquake card styling  */
-/* Testing how it would look as card */
+/* Earthquake card styling  */
 .earthquake-card {
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 1rem;
-  margin-bottom: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 1rem;
 }
 
 .error-message {
-  color: #b00020;
+    color: #b00020;
 }
 
 /* Shared responsive layout */
-
 main {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
 }
 
 nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  padding: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
 }
 
 .events-container,
 .preparedness-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
 }
 
 .event-card,
 .preparedness-card {
-  padding: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
 }
 
 img {
-  max-width: 100%;
-  height: auto;
+    max-width: 100%;
+    height: auto;
 }
 
 /* Tablet and mobile screens */
 @media (max-width: 768px) {
-  main {
-    padding: 1rem;
-  }
+    main {
+        padding: 1rem;
+    }
+
+    .events-container,
+    .preparedness-container {
+        grid-template-columns: 1fr;
+    }
+
+    nav {
+        flex-direction: column;
+    }
 }
-
-  .events-container,
-  .preparedness-container {
-    grid-template-columns: 1fr;
-  }
-
-  nav {
-    flex-direction: column;
-  }
 
 /* Shelter Sidebar Styling */
 .shelter-sidebar {
-  background-color: #F2E5C6;
-  border: 3px solid #3B2E26;
-  border-radius: 20px;
-  padding: 20px;
-  margin: 20px;
-  max-width: 320px;
-  position: sticky;
-  top: 20px;
+    background-color: #F2E5C6;
+    border: 3px solid #3B2E26;
+    border-radius: 20px;
+    padding: 20px;
+    margin: 20px;
+    max-width: 320px;
+    position: sticky;
+    top: 20px;
 }
 
 #shelter-title {
-  font-size: 1.5rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    font-size: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .shelter-sidebar h2 {
-  margin-top: 0;
+    margin-top: 0;
 }
 
 .shelter-sidebar h3 {
-  margin-bottom: 5px;
+    margin-bottom: 5px;
 }
 
 .shelter-sidebar ul {
-  padding-left: 20px;
+    padding-left: 20px;
 }
 
 .shelter-sidebar a {
-  display: inline-block;
-  margin-bottom: 10px;
+    display: inline-block;
+    margin-bottom: 10px;
 }
 
 .shelter-note {
-  font-size: 0.9rem;
+    font-size: 0.9rem;
 }
 
 .page-with-sidebar {
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
 }
 
 .page-content {
-  flex: 1;
+    flex: 1;
 }
 
 /* CR delete report modal styling */
 .delete-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-
-  background-color: rgba(0, 0, 0, 0.5);
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .delete-modal[hidden] {
-  display: none;
+    display: none;
 }
 
 .delete-modal-content {
-  background-color: white;
-  padding: 25px;
-  border-radius: 8px;
-  width: 400px;
-  max-width: 90%;
+    background-color: white;
+    padding: 25px;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
 }
 
 .delete-report-option {
-  margin-bottom: 10px;
+    margin-bottom: 10px;
 }
 
 /* Community Report Form Styling */
 .report-card {
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 20px;
-  margin: 20px;
-  width: 50%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px;
+    width: 50%;
 }
