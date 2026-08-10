@@ -739,6 +739,9 @@ footer {
   text-align: center;
   background: var(--footer-beige);
   border-top: 1px solid #d0c2ac;
+  position: relative;
+  bottom: 0;
+  width: 100%;
 }
 
 .footer-grid,
