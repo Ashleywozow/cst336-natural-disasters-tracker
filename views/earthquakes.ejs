@@ -26,16 +26,19 @@
 
     <% } else { %>
 
+        <div class="earthquakes-container">
+
         <% for (let eq of earthquakes) { %>
 
-            <section class="earthquake-card">
-                <h2><a href="/earthquake/details?id=<%= eq.id %>"><%= eq.place %></a></h2>
+            <a href="/earthquake/details?id=<%= eq.id %>" class="earthquake-card">
+                <h2><%= eq.place %></h2>
                 <p><strong>Magnitude:</strong> <%= eq.magnitude %></p>
                 <p><strong>Date:</strong> <%= eq.time %></p>
-                <a href="/earthquake/details?id=<%= eq.id %>">View Details</a>
-            </section>
+            </a>
 
         <% } %>
+
+        </div>
 
     <% } %>
 </main>

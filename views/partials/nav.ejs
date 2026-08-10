@@ -1,25 +1,38 @@
 <nav>
-  <a href="/">Home</a>
-  <a href="/earthquakes">Earthquakes</a>
-  <a href="/saved">Saved Earthquakes</a>
-  <a href="/events">Natural Events</a>
-  <a href="/reports">Community Reports</a>
-  <a href="/preparedness">Preparedness</a>
+  <a href="/" class="brand">
+    <span class="brand-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M12 3 3 20h18L12 3Z" />
+        <path d="M8 20 12 11l4 9" />
+      </svg>
+    </span>
+    Natural Disasters Tracker
+  </a>
+
+  <div class="nav-links-group">
+    <a href="/">Home</a>
+    <a href="/earthquakes">Earthquakes</a>
+    <a href="/events">Natural Events</a>
+    <a href="/saved">Saved Earthquakes</a>
+    <a href="/reports">Community Reports</a>
+    <a href="/preparedness">Preparedness</a>
+  </div>
+
+  <div class="auth-group">
+    <% if (currentUser) { %>
+
+      <span>Welcome, <%= currentUser.displayName %></span>
+      <a href="/dashboard">Dashboard</a>
+
+      <form action="/logout" method="POST">
+        <button type="submit">Log Out</button>
+      </form>
+
+    <% } else { %>
+
+      <a href="/signup">Sign Up</a>
+      <a href="/login">Log In</a>
+
+    <% } %>
+  </div>
 </nav>
-
-<% if (currentUser) { %>
-
-  <span>
-    Welcome, <%= currentUser.displayName %>
-  </span>
-
-  <form action="/logout" method="POST" style="display: inline;">
-    <button type="submit">Log Out</button>
-  </form>
-
-<% } else { %>
-
-  <a href="/signup">Sign Up</a>
-  <a href="/login">Log In</a>
-
-<% } %>
