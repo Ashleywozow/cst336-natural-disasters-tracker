@@ -658,8 +658,18 @@ input[type="submit"]:focus-visible {
   padding-left: 1.2rem;
 }
 
-.shelter-note {
-  font-size: 0.9rem;
+/* --------------------------------------------------
+   Tables
+-------------------------------------------------- */
+
+table {
+    width: 100%;
+    overflow: hidden;
+    border-collapse: collapse;
+    background: var(--card-white);
+    border: 1px solid var(--border-greige);
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-soft);
 }
 
 /* --------------------------------------------------
@@ -713,7 +723,7 @@ tr:nth-child(even) td {
 }
 
 .delete-modal[hidden] {
-  display: none;
+    display: none;
 }
 
 .delete-modal-content {
