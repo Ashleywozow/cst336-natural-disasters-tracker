@@ -83,3 +83,26 @@ for (let i = 0; i < removeButtons.length; i++) {
     }
   });
 }
+
+// Filters Natural Events cards by category.
+const eventCategoryFilter = document.querySelector("#eventCategoryFilter");
+const eventCards = document.querySelectorAll(".event-card");
+
+if (eventCategoryFilter && eventCards.length > 0) {
+  eventCategoryFilter.addEventListener("change", function () {
+    const selectedCategory = eventCategoryFilter.value;
+
+    for (let card of eventCards) {
+      const cardCategory = card.dataset.category;
+
+      if (
+        selectedCategory === "all" ||
+        cardCategory === selectedCategory
+      ) {
+        card.style.display = "";
+      } else {
+        card.style.display = "none";
+      }
+    }
+  });
+}

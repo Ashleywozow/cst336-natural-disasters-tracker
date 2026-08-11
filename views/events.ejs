@@ -8,6 +8,21 @@
   <p>
     View current natural events reported by NASA's EONET service.
   </p>
+  <label for="eventCategoryFilter">Filter by category:</label>
+
+<select id="eventCategoryFilter">
+  <option value="all">All Categories</option>
+  <option value="Wildfires">Wildfires</option>
+  <option value="Volcanoes">Volcanoes</option>
+  <option value="Severe Storms">Severe Storms</option>
+  <option value="Floods">Floods</option>
+  <option value="Sea and Lake Ice">Sea and Lake Ice</option>
+  <option value="Drought">Drought</option>
+  <option value="Dust and Haze">Dust and Haze</option>
+  <option value="Landslides">Landslides</option>
+  <option value="Snow">Snow</option>
+  <option value="Temperature Extremes">Temperature Extremes</option>
+</select>
 
   <% if (errorMessage) { %>
     <p class="error-message"><%= errorMessage %></p>
@@ -21,7 +36,7 @@
 
     <% for (let event of events) { %>
 
-      <article class="event-card">
+      <article class="event-card" data-category="<%= event.category %>">
 
         <h2><%= event.title %></h2>
 
