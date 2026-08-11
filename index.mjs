@@ -230,7 +230,7 @@ app.get("/", (req, res) => {
 app.get("/events", async (req, res) => {
   try {
     const apiUrl =
-      "https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=10";
+      "https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=20";
 
     const apiResponse = await fetch(apiUrl);
 
