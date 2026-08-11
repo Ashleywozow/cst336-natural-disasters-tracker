@@ -191,7 +191,7 @@ app.post("/login", async (req, res) => {
     }
 
     req.session.user = {
-      userId: user.userId,
+      userId: user.user_id,
       displayName: user.display_name,
       email: user.email,
     };
