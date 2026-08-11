@@ -3,14 +3,14 @@
 <%- include("partials/nav") %>
 
 <main>
-  <h1>Current Natural Events</h1>
+  <h1>Natural Events</h1>
 
   <p>
-    Current natural events provided by NASA's EONET API.
+    View current natural events reported by NASA's EONET service.
   </p>
 
   <% if (errorMessage) { %>
-    <p><%= errorMessage %></p>
+    <p class="error-message"><%= errorMessage %></p>
   <% } %>
 
   <% if (!errorMessage && events.length === 0) { %>
@@ -36,7 +36,7 @@
         </p>
 
         <% if (event.sourceUrl) { %>
-          <p>
+          <div class="card-actions">
             <a
               href="<%= event.sourceUrl %>"
               target="_blank"
@@ -44,7 +44,7 @@
             >
               View Official Source
             </a>
-          </p>
+          </div>
         <% } %>
 
       </article>

@@ -49,6 +49,7 @@ CREATE TABLE saved_earthquakes (
   FOREIGN KEY (user_id)
     REFERENCES users(user_id)
     ON DELETE CASCADE
+);
 
 -- Stores emergency preparedness tips for different disaster types.
 CREATE TABLE preparedness_tips (
@@ -56,4 +57,38 @@ CREATE TABLE preparedness_tips (
   disaster_type VARCHAR(50) NOT NULL,
   title VARCHAR(150) NOT NULL,
   tip_text TEXT NOT NULL
+);
+
+INSERT INTO preparedness_tips
+(disaster_type, title, tip_text)
+VALUES
+(
+  'Earthquake',
+  'Before an Earthquake',
+  'Secure heavy furniture, prepare an emergency supply kit, and identify safe places to take cover.'
+),
+(
+  'Earthquake',
+  'During an Earthquake',
+  'Drop to the ground, take cover under sturdy furniture, and hold on until the shaking stops.'
+),
+(
+  'Earthquake',
+  'After an Earthquake',
+  'Check for injuries and hazards, expect aftershocks, and follow instructions from local emergency officials.'
+),
+(
+  'Wildfire',
+  'Wildfire Preparedness',
+  'Keep important documents and emergency supplies ready, know your evacuation routes, and leave immediately if officials issue an evacuation order.'
+),
+(
+  'Flood',
+  'Flood Safety',
+  'Move to higher ground when flooding is possible and never walk or drive through floodwater.'
+),
+(
+  'Severe Storm',
+  'Severe Weather Safety',
+  'Stay indoors away from windows, keep emergency alerts available, and be prepared for power outages.'
 );
