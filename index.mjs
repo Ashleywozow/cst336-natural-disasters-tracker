@@ -48,9 +48,11 @@ const pool = mysql.createPool({
 });
 
 function requireLogin(req, res, next) { 
-  if (!req.session.user) { 
+  if (!req.session.user) {
+    req.session.returnTo = req.originalUrl;
     return res.redirect("/login"); 
-  } next(); 
+  }
+  next(); 
 }
 
 // Displays the account signup form.
@@ -194,7 +196,7 @@ app.post("/login", async (req, res) => {
       email: user.email,
     };
 
-    res.redirect("/");
+    res.redirect(req.session.returnTo || "/");
   } catch (error) {
     console.error("Login error:", error);
 
@@ -227,10 +229,11 @@ app.get("/", (req, res) => {
 });
 
 // Displays current natural events from NASA EONET.
+// The EONET API is documented here: https://eonet.gsfc.nasa.gov/docs/v3
 app.get("/events", async (req, res) => {
   try {
     const apiUrl =
-      "https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=10";
+      "https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=20";
 
     const apiResponse = await fetch(apiUrl);
 
@@ -590,6 +593,7 @@ app.post("/report/delete", async (req, res) => {
 
 
 // Displays recent earthquakes from the USGS Earthquake API.
+// The USGS Earthquake API is documented here: https://earthquake.usgs.gov/fdsnws/event/1/
 app.get("/earthquakes", async (req, res) => {
   const minMagnitude = req.query.minMagnitude || "";
 
@@ -737,11 +741,11 @@ app.post("/earthquake/save", requireLogin, async (req, res) => {
 });
 
 // Displays the logged-in user's saved earthquakes.
-app.get("/saved", async (req, res) => {
+app.get("/saved", requireLogin, async (req, res) => {
   try {
     const [rows] = await pool.execute(
       `SELECT * FROM saved_earthquakes WHERE user_id = ? ORDER BY saved_at DESC`,
-      [req.session.user.user_id]
+      [req.session.user.userId]
     );
 
     res.render("savedEarthquakes", { savedEarthquakes: rows });
@@ -752,13 +756,13 @@ app.get("/saved", async (req, res) => {
 });
 
 // Removes one saved earthquake 
-app.post("/saved/delete", async (req, res) => {
+app.post("/saved/delete", requireLogin, async (req, res) => {
   const savedId = req.body.savedId;
 
   try {
     await pool.execute(
       `DELETE FROM saved_earthquakes WHERE saved_id = ? AND user_id = ?`,
-      [savedId, req.session.user.user_id]
+      [savedId, req.session.user.userId]
     );
 
     res.redirect("/saved");

@@ -17,7 +17,7 @@
             <p><strong>Magnitude:</strong> <%= earthquake.magnitude %></p>
             <p><strong>Date:</strong> <%= earthquake.time %></p>
             <p><strong>Coordinates:</strong> <%= earthquake.latitude %>, <%= earthquake.longitude %></p>
-            <p><a href="<%= earthquake.url %>" target="_blank">View Ofsficial USGS Source</a></p>
+            <p><a href="<%= earthquake.url %>" target="_blank">View Official USGS Source</a></p>
 
             <form action="/earthquake/save" method="POST">
                 <input type="hidden" name="apiEventId" value="<%= earthquake.id %>">

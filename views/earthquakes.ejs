@@ -37,42 +37,22 @@
 
     <p class="empty-state">No earthquakes found for this filter.</p>
 
-  <% } else { %>
+    <% } else { %>
 
     <div class="earthquakes-list">
       <% for (let eq of earthquakes) { %>
 
-        <a
-          href="/earthquake/details?id=<%= eq.id %>"
-          class="earthquake-card-link"
-          aria-label="View earthquake details for <%= eq.place %>"
-        >
-          <div class="earthquake-card-content">
-            <h2><%= eq.place %></h2>
-
-            <div class="earthquake-meta">
-              <p>
-                <strong>Magnitude:</strong>
-                <%= eq.magnitude %>
-              </p>
-
-              <p>
-                <strong>Date:</strong>
-                <%= eq.time %>
-              </p>
-            </div>
-
-            <span class="earthquake-card-action">
-              View earthquake details
-              <span aria-hidden="true">→</span>
-            </span>
-          </div>
-        </a>
+            <section class="earthquake-card">
+                <h2><%= eq.place %></h2>
+                <p><strong>Magnitude:</strong> <%= eq.magnitude %></p>
+                <p><strong>Date:</strong> <%= eq.time %></p>
+                <a href="/earthquake/details?id=<%= eq.id %>">View Details</a>
+            </section>
 
       <% } %>
     </div>
 
-  <% } %>
+    <% } %>
 </main>
 
 <%- include("partials/footer") %>
