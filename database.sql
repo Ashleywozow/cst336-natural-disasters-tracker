@@ -49,6 +49,7 @@ CREATE TABLE saved_earthquakes (
   FOREIGN KEY (user_id)
     REFERENCES users(user_id)
     ON DELETE CASCADE
+); 
 
 -- Stores emergency preparedness tips for different disaster types.
 CREATE TABLE preparedness_tips (
