@@ -59,6 +59,7 @@ function requireLogin(req, res, next) {
   next();
 }
 
+
 // Displays the account signup form.
 app.get("/signup", (req, res) => {
   res.render("signup", {
