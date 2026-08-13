@@ -47,13 +47,18 @@ const pool = mysql.createPool({
   waitForConnections: true,
 });
 
-function requireLogin(req, res, next) { 
+function requireLogin(req, res, next) {
   if (!req.session.user) {
-    req.session.returnTo = req.originalUrl;
-    return res.redirect("/login"); 
+    if (req.method === "GET") {
+      req.session.returnTo = req.originalUrl;
+    } else {
+      req.session.returnTo = req.get("Referer") || "/";
+    }
+    return res.redirect("/login");
   }
-  next(); 
+  next();
 }
+
 
 // Displays the account signup form.
 app.get("/signup", (req, res) => {
